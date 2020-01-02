@@ -1,4 +1,4 @@
-module github.com/eycorsican/go-tun2socks-mobile
+module github.com/xxf098/go-tun2socks-build
 
 go 1.13
 
