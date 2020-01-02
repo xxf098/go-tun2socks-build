@@ -9,12 +9,12 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	vcore "v2ray.com/core"
 	vproxyman "v2ray.com/core/app/proxyman"
 	vbytespool "v2ray.com/core/common/bytespool"
 	vnet "v2ray.com/core/common/net"
-	vsession "v2ray.com/core/common/session"
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
@@ -27,9 +27,9 @@ var lwipStack core.LWIPStack
 var v *vcore.Instance
 var isStopped = false
 
-type DBService interface {
-	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
-}
+// type DBService interface {
+// 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
+// }
 
 // VpnService should be implemented in Java/Kotlin.
 type VpnService interface {
@@ -69,11 +69,11 @@ func SetLocalDNS(dns string) {
 
 // StartV2Ray sets up lwIP stack, starts a V2Ray instance and registers the instance as the
 // connection handler for tun2socks.
-func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, dbService DBService, configBytes []byte, assetPath, proxyLogDBPath string) {
+func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte, assetPath, proxyLogDBPath string) {
 	if packetFlow != nil {
-		if dbService != nil {
-			vsession.DefaultDBService = dbService
-		}
+		// if dbService != nil {
+		// 	vsession.DefaultDBService = dbService
+		// }
 
 		if lwipStack == nil {
 			// Setup the lwIP stack.
@@ -114,9 +114,11 @@ func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, dbService DBServic
 		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
 
 		// Register tun2socks connection handlers.
-		vhandler := v2ray.NewHandler(ctx, v)
-		core.RegisterTCPConnectionHandler(vhandler)
-		core.RegisterUDPConnectionHandler(vhandler)
+		// vhandler := v2ray.NewHandler(ctx, v)
+		// core.RegisterTCPConnectionHandler(vhandler)
+		// core.RegisterUDPConnectionHandler(vhandler)
+		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
+		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 		// Write IP packets back to TUN.
 		core.RegisterOutputFn(func(data []byte) (int, error) {
@@ -138,7 +140,7 @@ func StopV2Ray() {
 	}
 	v.Close()
 	v = nil
-	vsession.DefaultDBService = nil
+	// vsession.DefaultDBService = nil
 }
 
 func init() {
