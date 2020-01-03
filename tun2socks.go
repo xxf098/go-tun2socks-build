@@ -22,8 +22,7 @@ import (
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
-	// copy from keeplive
-	"github.com/eycorsican/go-tun2socks/proxy/v2ray"
+	"github.com/xxf098/go-tun2socks-build/v2ray"
 )
 
 var localDNS = "223.5.5.5:53"
