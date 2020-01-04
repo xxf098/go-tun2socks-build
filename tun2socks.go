@@ -43,7 +43,8 @@ func newError(values ...interface{}) *verrors.Error {
 	return verrors.New(values...).WithPathObj(errPathObjHolder{})
 }
 
-type vmess struct {
+// constructor export New
+type Vmess struct {
 	Host     string
 	Path     string
 	TLS      string
@@ -55,11 +56,16 @@ type vmess struct {
 	Loglevel string
 }
 
+func NewVmess() *Vmess {
+	return &Vmess{Loglevel: "error"}
+}
+
 // type DBService interface {
 // 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
 // }
 
-func generateVmessConfig(profile vmess) ([]byte, error) {
+// TODO: try with native struct conf.vmess
+func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
 	vmessConfig.Log = v2ray.Log{Access: "", Error: "", Loglevel: profile.Loglevel}
 	vmessConfig.DNS = v2ray.DNS{
@@ -258,28 +264,7 @@ func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte
 	return errors.New("packetFlow is null")
 }
 
-func GenerateVmessString(
-	host string,
-	path string,
-	tls string,
-	add string,
-	port int,
-	aid int,
-	net string,
-	id string,
-	loglevel string,
-) (string, error) {
-	profile := vmess{
-		Host:     host,
-		Path:     path,
-		TLS:      tls,
-		Add:      add,
-		Port:     port,
-		Aid:      aid,
-		Net:      net,
-		ID:       id,
-		Loglevel: loglevel,
-	}
+func GenerateVmessString(profile *Vmess) (string, error) {
 	configBytes, err := generateVmessConfig(profile)
 	if err != nil {
 		log.Fatal("start V instance failed: %v", err)
@@ -290,18 +275,10 @@ func GenerateVmessString(
 
 // StartV2Ray sets up lwIP stack, starts a V2Ray instance and registers the instance as the
 // connection handler for tun2socks.
-func StartV2RayWithVmess(
+func StartV2RayByVmess(
 	packetFlow PacketFlow,
 	vpnService VpnService,
-	host string,
-	path string,
-	tls string,
-	add string,
-	port int,
-	aid int,
-	net string,
-	id string,
-	loglevel string,
+	profile *Vmess,
 	assetPath string) error {
 	if packetFlow != nil {
 		// if dbService != nil {
@@ -335,17 +312,6 @@ func StartV2RayWithVmess(
 
 		// Start the V2Ray instance.
 		// v, err = vcore.StartInstance("json", configBytes)
-		profile := vmess{
-			Host:     host,
-			Path:     path,
-			TLS:      tls,
-			Add:      add,
-			Port:     port,
-			Aid:      aid,
-			Net:      net,
-			ID:       id,
-			Loglevel: loglevel,
-		}
 		configBytes, err := generateVmessConfig(profile)
 		if err != nil {
 			log.Fatal("start V instance failed: %v", err)
