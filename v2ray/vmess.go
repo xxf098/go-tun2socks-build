@@ -20,11 +20,11 @@ type InboundsSettings struct {
 	UDP  bool   `json:"udp"`
 }
 type Inbounds struct {
-	Listen           string           `json:"listen"`
-	Port             int              `json:"port"`
-	Protocol         string           `json:"protocol"`
-	InboundsSettings InboundsSettings `json:"settings,omitempty"`
-	Tag              string           `json:"tag"`
+	Listen           string            `json:"listen"`
+	Port             int               `json:"port"`
+	Protocol         string            `json:"protocol"`
+	InboundsSettings *InboundsSettings `json:"settings,omitempty"`
+	Tag              string            `json:"tag"`
 }
 type Log struct {
 	Access   string `json:"access"`
@@ -54,19 +54,26 @@ type Headers struct {
 }
 type Wssettings struct {
 	ConnectionReuse bool    `json:"connectionReuse"`
-	Headers         Headers `json:"headers"`
+	Headers         Headers `json:"headers,omitempty"`
 	Path            string  `json:"path"`
 }
+
+type TLSSettings struct {
+	AllowInsecure bool `json:"allowInsecure"`
+}
+
 type StreamSettings struct {
-	Network    string     `json:"network"`
-	Wssettings Wssettings `json:"wssettings"`
+	Network     string       `json:"network"`
+	Wssettings  Wssettings   `json:"wssettings"`
+	Security    string       `json:"security,omitempty"`
+	TLSSettings *TLSSettings `json:"tlsSettings,omitempty"`
 }
 
 type Outbounds struct {
-	Mux            Mux               `json:"mux,omitempty"`
+	Mux            *Mux              `json:"mux,omitempty"`
 	Protocol       string            `json:"protocol"`
 	Settings       OutboundsSettings `json:"settings,omitempty"`
-	StreamSettings StreamSettings    `json:"streamSettings,omitempty"`
+	StreamSettings *StreamSettings   `json:"streamSettings,omitempty"`
 	Tag            string            `json:"tag"`
 }
 type Rules struct {
