@@ -56,15 +56,25 @@ type Vmess struct {
 	Loglevel string
 }
 
-func NewVmess() *Vmess {
-	return &Vmess{Loglevel: "error"}
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Loglevel string) *Vmess {
+	return &Vmess{
+		Host:     Host,
+		Path:     Path,
+		TLS:      TLS,
+		Add:      Add,
+		Port:     Port,
+		Aid:      Aid,
+		Net:      Net,
+		ID:       ID,
+		Loglevel: Loglevel,
+	}
 }
 
 // type DBService interface {
 // 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
 // }
 
-// TODO: try with native struct conf.vmess
+// TODO: try with native struct config conf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
 	vmessConfig.Log = v2ray.Log{Access: "", Error: "", Loglevel: profile.Loglevel}
