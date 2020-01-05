@@ -178,11 +178,19 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		ErrorLog:  "",
 		LogLevel:  profile.Loglevel,
 	}
-	localhost := conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}
+	localhost := conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
+			&conf.NameServerConfig{
+				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+				Port:    53,
+				Domains: []string{"geosite:cn"},
+			},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
 		Hosts: map[string]*conf.Address{
 			"baidu.com":            &localhost,
@@ -235,14 +243,14 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			Tag:       "socks-in",
 			Protocol:  "socks",
 			PortRange: &conf.PortRange{From: 8088, To: 8088},
-			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-			Settings:  &inboundsSettingsMsg,
+			// ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			Settings: &inboundsSettingsMsg,
 		},
 		conf.InboundDetourConfig{
 			Tag:       "http-in",
 			Protocol:  "http",
 			PortRange: &conf.PortRange{From: 8090, To: 8090},
-			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			// ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		},
 	}
 
