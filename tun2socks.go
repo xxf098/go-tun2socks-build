@@ -178,14 +178,35 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		ErrorLog:  "",
 		LogLevel:  profile.Loglevel,
 	}
+	localhost := conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}},
 		},
 		Hosts: map[string]*conf.Address{
-			"baidu.com": &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-			"umeng.com": &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			"baidu.com":            &localhost,
+			"umeng.com":            &localhost,
+			"sogou.com":            &localhost,
+			"doubleclick.net":      &localhost,
+			"byteimg.com":          &localhost,
+			"ixigua.com":           &localhost,
+			"snssdk.com":           &localhost,
+			"uc.com":               &localhost,
+			"uc.cn":                &localhost,
+			"umengcloud.com":       &localhost,
+			"baidustatic.com":      &localhost,
+			"auspiciousvp.com":     &localhost,
+			"www.auspiciousvp.com": &localhost,
+			"cnzz.com":             &localhost,
+			"toutiaopage.com":      &localhost,
+			"douyin.com":           &localhost,
+			"bdstatic.com":         &localhost,
+			"360.cn":               &localhost,
+			"umtrack.com":          &localhost,
+			"umsns.com":            &localhost,
+			"qhupdate.com":         &localhost,
+			"qhimg.com":            &localhost,
 		},
 	}
 	domainStrategy := "IPIfNonMatch"
