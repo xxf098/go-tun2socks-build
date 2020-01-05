@@ -20,6 +20,7 @@ import (
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
+	"v2ray.com/core/infra/conf"
 	v2serial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
 
@@ -170,6 +171,132 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	return json.MarshalIndent(vmessConfig, "", "    ")
 }
 
+func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
+	jsonConfig := &conf.Config{}
+	jsonConfig.LogConfig = &conf.LogConfig{
+		AccessLog: "",
+		ErrorLog:  "",
+		LogLevel:  profile.Loglevel,
+	}
+	jsonConfig.DNSConfig = &conf.DnsConfig{
+		Servers: []*conf.NameServerConfig{
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}},
+		},
+		Hosts: map[string]*conf.Address{
+			"baidu.com": &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			"umeng.com": &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		},
+	}
+	domainStrategy := "IPIfNonMatch"
+	rule1, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "direct",
+		IP:          []string{"geoip:private", "geoip:cn"},
+	})
+	rule2, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "direct",
+		Domain:      []string{"geosite:cn"},
+	})
+	jsonConfig.RouterConfig = &conf.RouterConfig{
+		DomainStrategy: &domainStrategy,
+		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2)},
+	}
+	inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
+		Auth: "noauth",
+		IP:   "127.0.0.1",
+		UDP:  true,
+	})
+	inboundsSettingsMsg := json.RawMessage(inboundsSettings)
+	jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
+		conf.InboundDetourConfig{
+			Tag:       "socks-in",
+			Protocol:  "socks",
+			PortRange: &conf.PortRange{From: 8088, To: 8088},
+			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			Settings:  &inboundsSettingsMsg,
+		},
+		conf.InboundDetourConfig{
+			Tag:       "http-in",
+			Protocol:  "http",
+			PortRange: &conf.PortRange{From: 8090, To: 8090},
+			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		},
+	}
+
+	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
+		Vnext: []v2ray.Vnext{
+			v2ray.Vnext{
+				Address: profile.Add,
+				Port:    profile.Port,
+				Users: []v2ray.Users{
+					v2ray.Users{
+						AlterID:  profile.Aid,
+						Email:    "v2ray@email.com",
+						ID:       profile.ID,
+						Security: "auto",
+					},
+				},
+			},
+		},
+	})
+	outboundsSettingsMsg1 := json.RawMessage(outboundsSettings1)
+	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
+		Protocol:      "vmess",
+		Tag:           "proxy",
+		MuxSettings:   &conf.MuxConfig{Enabled: true, Concurrency: 16},
+		Settings:      &outboundsSettingsMsg1,
+		StreamSetting: &conf.StreamConfig{},
+	}
+	if profile.Net == "ws" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network:    &transportProtocol,
+			WSSettings: &conf.WebSocketConfig{Path: profile.Path},
+		}
+		if profile.Host != "" {
+			vmessOutboundDetourConfig.StreamSetting.WSSettings.Headers =
+				map[string]string{"Host": profile.Host}
+		}
+	}
+	if profile.TLS == "tls" {
+		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
+		vmessOutboundDetourConfig.StreamSetting.TLSSettings = &conf.TLSConfig{Insecure: true}
+	}
+	// second
+	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
+	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
+	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+		vmessOutboundDetourConfig,
+		conf.OutboundDetourConfig{
+			Protocol: "freedom",
+			Tag:      "direct",
+			Settings: &outboundsSettingsMsg2,
+		},
+	}
+	return jsonConfig, nil
+}
+
+func startInstance(profile *Vmess) (*vcore.Instance, error) {
+	config, err := loadVmessConfig(profile)
+	if err != nil {
+		return nil, err
+	}
+	coreConfig, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	instance, err := vcore.New(coreConfig)
+	if err != nil {
+		return nil, err
+	}
+	if err := instance.Start(); err != nil {
+		return nil, err
+	}
+	return instance, nil
+}
+
 // VpnService should be implemented in Java/Kotlin.
 type VpnService interface {
 	// Protect is just a proxy to the VpnService.protect() method.
@@ -285,7 +412,7 @@ func GenerateVmessString(profile *Vmess) (string, error) {
 
 // StartV2Ray sets up lwIP stack, starts a V2Ray instance and registers the instance as the
 // connection handler for tun2socks.
-func StartV2RayByVmess(
+func StartV2RayWithVmess(
 	packetFlow PacketFlow,
 	vpnService VpnService,
 	profile *Vmess,
@@ -321,13 +448,12 @@ func StartV2RayByVmess(
 		core.SetBufferPool(vbytespool.GetPool(core.BufSize))
 
 		// Start the V2Ray instance.
+		// configBytes, err := generateVmessConfig(profile)
+		// if err != nil {
+		// 	return err
+		// }
 		// v, err = vcore.StartInstance("json", configBytes)
-		configBytes, err := generateVmessConfig(profile)
-		if err != nil {
-			log.Fatal("start V instance failed: %v", err)
-			return err
-		}
-		v, err = vcore.StartInstance("json", configBytes)
+		v, err = startInstance(profile)
 		if err != nil {
 			log.Fatal("start V instance failed: %v", err)
 			return err
@@ -341,9 +467,6 @@ func StartV2RayByVmess(
 		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
 
 		// Register tun2socks connection handlers.
-		// vhandler := v2ray.NewHandler(ctx, v)
-		// core.RegisterTCPConnectionHandler(vhandler)
-		// core.RegisterUDPConnectionHandler(vhandler)
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
 		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
