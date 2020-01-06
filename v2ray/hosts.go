@@ -32,3 +32,27 @@ var BlockHosts = map[string]*conf.Address{
 	"at3.doubanio.com":     localhost,
 	"p.pinduoduo.com":      localhost,
 }
+
+var BlockDomains = []string{
+	"baidu",
+	"bdstatic",
+	"umeng",
+	"auspiciousvp",
+	"cnzz.com",
+	"toutiao",
+	"snssdk.com",
+	"ixiguavideo.com",
+	"domian:sogou.com",
+	"domian:doubleclick.net",
+	"byteimg.com",
+	"ixigua.com",
+	"domian:uc.com",
+	"domian:uc.cn",
+	"ucweb.com",
+	"domian:360.cn",
+	"qhupdate.com",
+	"360safe.com",
+	"360totalsecurity.com",
+	"at3.doubanio.com",
+	"p.pinduoduo.com",
+}
