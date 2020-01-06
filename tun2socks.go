@@ -178,7 +178,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		ErrorLog:  "",
 		LogLevel:  profile.Loglevel,
 	}
-	localhost := conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
+	// localhost := conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
@@ -192,30 +192,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
-		Hosts: map[string]*conf.Address{
-			"baidu.com":            &localhost,
-			"umeng.com":            &localhost,
-			"sogou.com":            &localhost,
-			"doubleclick.net":      &localhost,
-			"byteimg.com":          &localhost,
-			"ixigua.com":           &localhost,
-			"snssdk.com":           &localhost,
-			"uc.com":               &localhost,
-			"uc.cn":                &localhost,
-			"umengcloud.com":       &localhost,
-			"baidustatic.com":      &localhost,
-			"auspiciousvp.com":     &localhost,
-			"www.auspiciousvp.com": &localhost,
-			"cnzz.com":             &localhost,
-			"toutiaopage.com":      &localhost,
-			"douyin.com":           &localhost,
-			"bdstatic.com":         &localhost,
-			"360.cn":               &localhost,
-			"umtrack.com":          &localhost,
-			"umsns.com":            &localhost,
-			"qhupdate.com":         &localhost,
-			"qhimg.com":            &localhost,
-		},
+		Hosts: v2ray.BlockHosts,
 	}
 	domainStrategy := "IPIfNonMatch"
 	rule1, _ := json.Marshal(v2ray.Rules{
@@ -228,9 +205,15 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		OutboundTag: "direct",
 		Domain:      []string{"geosite:cn"},
 	})
+	rule3, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "blocked",
+		Domain:      v2ray.BlockDomains,
+	})
+	// update rules
 	jsonConfig.RouterConfig = &conf.RouterConfig{
 		DomainStrategy: &domainStrategy,
-		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2)},
+		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2), json.RawMessage(rule3)},
 	}
 	inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
 		Auth: "noauth",
@@ -243,14 +226,14 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			Tag:       "socks-in",
 			Protocol:  "socks",
 			PortRange: &conf.PortRange{From: 8088, To: 8088},
-			// ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-			Settings: &inboundsSettingsMsg,
+			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			Settings:  &inboundsSettingsMsg,
 		},
 		conf.InboundDetourConfig{
 			Tag:       "http-in",
 			Protocol:  "http",
 			PortRange: &conf.PortRange{From: 8090, To: 8090},
-			// ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		},
 	}
 
@@ -296,6 +279,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// second
 	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
 	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
+	// order matters
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 		vmessOutboundDetourConfig,
 		conf.OutboundDetourConfig{

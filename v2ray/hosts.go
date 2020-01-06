@@ -37,7 +37,7 @@ var BlockDomains = []string{
 	"baidu",
 	"bdstatic",
 	"umeng",
-	"auspiciousvp",
+	"auspiciousvp.com",
 	"cnzz.com",
 	"toutiao",
 	"snssdk.com",
