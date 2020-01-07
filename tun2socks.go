@@ -178,10 +178,14 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		ErrorLog:  "",
 		LogLevel:  profile.Loglevel,
 	}
-	// localhost := conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
+	// https://github.com/Loyalsoldier/v2ray-rules-dat
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			&conf.NameServerConfig{
+				Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})},
+				Port:    53,
+				Domains: []string{"geosite:geolocation-!cn"},
+			},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			&conf.NameServerConfig{
