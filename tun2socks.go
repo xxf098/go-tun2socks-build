@@ -189,8 +189,8 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 				Port:    53,
 				// Domains: []string{"geosite:cn"},
 			},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
@@ -232,12 +232,12 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 			Settings:  &inboundsSettingsMsg,
 		},
-		conf.InboundDetourConfig{
-			Tag:       "http-in",
-			Protocol:  "http",
-			PortRange: &conf.PortRange{From: 8090, To: 8090},
-			ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-		},
+		// conf.InboundDetourConfig{
+		// 	Tag:       "http-in",
+		// 	Protocol:  "http",
+		// 	PortRange: &conf.PortRange{From: 8090, To: 8090},
+		// 	ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		// },
 	}
 
 	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
