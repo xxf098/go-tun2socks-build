@@ -15,9 +15,11 @@ import (
 
 	mobasset "golang.org/x/mobile/asset"
 	vcore "v2ray.com/core"
+	vapplog "v2ray.com/core/app/log"
 	vproxyman "v2ray.com/core/app/proxyman"
 	vbytespool "v2ray.com/core/common/bytespool"
 	verrors "v2ray.com/core/common/errors"
+	vcommonlog "v2ray.com/core/common/log"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
 	"v2ray.com/core/infra/conf"
@@ -317,32 +319,30 @@ type VpnService interface {
 	Protect(fd int) bool
 }
 
-// type LogService interface {
-// 	Write(s string) error
-// 	Close()
-// }
+type LogService interface {
+	WriteLog(s string) error
+}
 
-// type logWriter struct {
-// 	logger *LogService
-// }
+type logWriter struct {
+	logger *LogService
+}
 
-// func (w *logWriter) Write(s string) error {
-// 	w.Write(s)
-// 	return nil
-// }
+func (w *logWriter) Write(s string) error {
+	(*w.logger).WriteLog(s)
+	return nil
+}
 
-// func (w *logWriter) Close() error {
-// 	w.Close()
-// 	return nil
-// }
+func (w *logWriter) Close() error {
+	return nil
+}
 
-// func createLogWriter(logService LogService) vcommonlog.WriterCreator {
-// 	return func() vcommonlog.Writer {
-// 		return &logWriter{
-// 			logger: &logService,
-// 		}
-// 	}
-// }
+func createLogWriter(logService LogService) vcommonlog.WriterCreator {
+	return func() vcommonlog.Writer {
+		return &logWriter{
+			logger: &logService,
+		}
+	}
+}
 
 // PacketFlow should be implemented in Java/Kotlin.
 type PacketFlow interface {
@@ -455,7 +455,7 @@ func GenerateVmessString(profile *Vmess) (string, error) {
 func StartV2RayWithVmess(
 	packetFlow PacketFlow,
 	vpnService VpnService,
-	// logService LogService,
+	logService LogService,
 	profile *Vmess,
 	assetPath string) error {
 	if packetFlow != nil {
@@ -471,11 +471,12 @@ func StartV2RayWithVmess(
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
 		// logger
-		// vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
-		// 	options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
-		// 	return vcommonlog.NewLogger(createLogWriter(logService)), nil
-		// })
-
+		if logService != nil {
+			vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
+				options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
+				return vcommonlog.NewLogger(createLogWriter(logService)), nil
+			})
+		}
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
 			if s.Protect(fd) {
