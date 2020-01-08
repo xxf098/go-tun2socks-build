@@ -174,18 +174,14 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	jsonConfig := &conf.Config{}
 	jsonConfig.LogConfig = &conf.LogConfig{
-		AccessLog: "",
-		ErrorLog:  "",
-		LogLevel:  profile.Loglevel,
+		// AccessLog: "",
+		// ErrorLog:  "",
+		LogLevel: profile.Loglevel,
 	}
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})},
-				Port:    53,
-				Domains: []string{"geosite:geolocation-!cn"},
-			},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			&conf.NameServerConfig{
@@ -321,6 +317,33 @@ type VpnService interface {
 	Protect(fd int) bool
 }
 
+// type LogService interface {
+// 	Write(s string) error
+// 	Close()
+// }
+
+// type logWriter struct {
+// 	logger *LogService
+// }
+
+// func (w *logWriter) Write(s string) error {
+// 	w.Write(s)
+// 	return nil
+// }
+
+// func (w *logWriter) Close() error {
+// 	w.Close()
+// 	return nil
+// }
+
+// func createLogWriter(logService LogService) vcommonlog.WriterCreator {
+// 	return func() vcommonlog.Writer {
+// 		return &logWriter{
+// 			logger: &logService,
+// 		}
+// 	}
+// }
+
 // PacketFlow should be implemented in Java/Kotlin.
 type PacketFlow interface {
 	// WritePacket should writes packets to the TUN fd.
@@ -432,6 +455,7 @@ func GenerateVmessString(profile *Vmess) (string, error) {
 func StartV2RayWithVmess(
 	packetFlow PacketFlow,
 	vpnService VpnService,
+	// logService LogService,
 	profile *Vmess,
 	assetPath string) error {
 	if packetFlow != nil {
@@ -446,6 +470,11 @@ func StartV2RayWithVmess(
 
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
+		// logger
+		// vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
+		// 	options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
+		// 	return vcommonlog.NewLogger(createLogWriter(logService)), nil
+		// })
 
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
