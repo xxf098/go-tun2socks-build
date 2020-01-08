@@ -386,7 +386,7 @@ func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte
 		// Start the V2Ray instance.
 		v, err = vcore.StartInstance("json", configBytes)
 		if err != nil {
-			log.Fatal("start V instance failed: %v", err)
+			log.Fatalf("start V instance failed: %v", err)
 			return err
 		}
 
@@ -421,7 +421,7 @@ func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte
 func GenerateVmessString(profile *Vmess) (string, error) {
 	configBytes, err := generateVmessConfig(profile)
 	if err != nil {
-		log.Fatal("start V instance failed: %v", err)
+		log.Fatalf("start V instance failed: %v", err)
 		return "", err
 	}
 	return string(configBytes), nil
@@ -472,7 +472,7 @@ func StartV2RayWithVmess(
 		// v, err = vcore.StartInstance("json", configBytes)
 		v, err = startInstance(profile)
 		if err != nil {
-			log.Fatal("start V instance failed: %v", err)
+			log.Fatalf("start V instance failed: %v", err)
 			return err
 		}
 
