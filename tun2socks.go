@@ -181,18 +181,19 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		LogLevel: profile.Loglevel,
 	}
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
+	// TODO: set dns by configuration
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			&conf.NameServerConfig{
 				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
-				Domains: []string{"geosite:cn"},
+				// Domains: []string{"geosite:cn"},
 			},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
 		Hosts: v2ray.BlockHosts,
 	}
