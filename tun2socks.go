@@ -181,7 +181,6 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		LogLevel: profile.Loglevel,
 	}
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
-	// TODO: set dns by configuration
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{
@@ -190,7 +189,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 				// Domains: []string{"geosite:cn"},
 			},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
@@ -318,31 +317,6 @@ type VpnService interface {
 	// Protect is just a proxy to the VpnService.protect() method.
 	// See also: https://developer.android.com/reference/android/net/VpnService.html#protect(int)
 	Protect(fd int) bool
-}
-
-type LogService interface {
-	WriteLog(s string) error
-}
-
-type logWriter struct {
-	logger *LogService
-}
-
-func (w *logWriter) Write(s string) error {
-	(*w.logger).WriteLog(s)
-	return nil
-}
-
-func (w *logWriter) Close() error {
-	return nil
-}
-
-func createLogWriter(logService LogService) vcommonlog.WriterCreator {
-	return func() vcommonlog.Writer {
-		return &logWriter{
-			logger: &logService,
-		}
-	}
 }
 
 // PacketFlow should be implemented in Java/Kotlin.
@@ -473,6 +447,7 @@ func StartV2RayWithVmess(
 		os.Setenv("v2ray.location.asset", assetPath)
 		// logger
 		if logService != nil {
+			// vapplog.LogType_None
 			vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
 				options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
 				return vcommonlog.NewLogger(createLogWriter(logService)), nil
