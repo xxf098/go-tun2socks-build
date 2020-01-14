@@ -191,8 +191,8 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{9, 9, 9, 9})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
 		Hosts: v2ray.BlockHosts,
 	}
@@ -348,9 +348,23 @@ func SetLocalDNS(dns string) {
 	localDNS = dns
 }
 
+func registerLog(logService LogService) {
+	if logService != nil {
+		vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
+			options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
+			return vcommonlog.NewLogger(createLogWriter(logService)), nil
+		})
+	}
+}
+
 // StartV2Ray sets up lwIP stack, starts a V2Ray instance and registers the instance as the
 // connection handler for tun2socks.
-func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte, assetPath string, proxyLogDBPath string) error {
+func StartV2Ray(
+	packetFlow PacketFlow,
+	vpnService VpnService,
+	logService LogService,
+	configBytes []byte,
+	assetPath string) error {
 	if packetFlow != nil {
 		// if dbService != nil {
 		// 	vsession.DefaultDBService = dbService
@@ -363,6 +377,8 @@ func StartV2Ray(packetFlow PacketFlow, vpnService VpnService, configBytes []byte
 
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
+		// log
+		registerLog(logService)
 
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
@@ -446,13 +462,7 @@ func StartV2RayWithVmess(
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
 		// logger
-		if logService != nil {
-			// vapplog.LogType_None
-			vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
-				options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
-				return vcommonlog.NewLogger(createLogWriter(logService)), nil
-			})
-		}
+		registerLog(logService)
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
 			if s.Protect(fd) {
