@@ -1,6 +1,6 @@
 # go-tun2socks-build
 
-Demo for building and using `go-tun2socks` on Android.
+Building and using `go-tun2socks` for V2Ray on Android. This library is used in [shadowsocksr-android](https://github.com/xxf098/shadowsocksr-android) for support V2Ray.
 
 ## Setup
 
@@ -20,4 +20,10 @@ go get -d ./...
 
 # Build an AAR
 make android
+
+# Build a Framework (not test)
+make ios
+
+# Both
+make
 ```
