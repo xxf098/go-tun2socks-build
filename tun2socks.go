@@ -427,6 +427,7 @@ func StartV2Ray(
 		})
 
 		isStopped = false
+		logService.WriteLog("V2Ray started!")
 		return nil
 	}
 	return errors.New("packetFlow is null")
@@ -512,6 +513,7 @@ func StartV2RayWithVmess(
 		})
 
 		isStopped = false
+		logService.WriteLog("V2Ray Started!")
 		return nil
 	}
 	return errors.New("packetFlow is null")
@@ -541,6 +543,31 @@ func init() {
 
 func CheckVersion() string {
 	return vcore.Version()
+}
+
+// TODO: update base on version
+func CopyAssets(assetDir string, force bool) error {
+	dats := [2]string{"geoip.dat", "geosite.dat"}
+	for _, dat := range dats {
+		_, err := os.Stat(assetDir + dat)
+		if os.IsNotExist(err) || force {
+			src, err := mobasset.Open("dat/" + dat)
+			if err != nil {
+				return err
+			}
+			dst, err := os.OpenFile(assetDir+dat, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(dst, src)
+			if err != nil {
+				return err
+			}
+			src.Close()
+			dst.Close()
+		}
+	}
+	return nil
 }
 
 func initV2Env(assetperfix string) {
