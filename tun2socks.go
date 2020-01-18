@@ -115,12 +115,12 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 				UDP:  true,
 			},
 		},
-		v2ray.Inbounds{
-			Tag:      "http-in",
-			Protocol: "http",
-			Port:     8090,
-			Listen:   "::",
-		},
+		// v2ray.Inbounds{
+		// 	Tag:      "http-in",
+		// 	Protocol: "http",
+		// 	Port:     8090,
+		// 	Listen:   "::",
+		// },
 	}
 	outbound := v2ray.Outbounds{
 		Tag:      "proxy",
@@ -625,6 +625,17 @@ func testLatency(proxy string) (int64, error) {
 		return elapsed.Milliseconds(), nil
 	}
 	return 0, newError(resp.Status)
+}
+
+func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
+	os.Setenv("v2ray.location.asset", assetPath)
+	server, err := startInstance(profile)
+	if err != nil {
+		return 0, err
+	}
+	defer server.Close()
+	socksProxy := "socks5://127.0.0.1:8088"
+	return testLatency(socksProxy)
 }
 
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
