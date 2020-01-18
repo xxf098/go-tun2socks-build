@@ -650,6 +650,19 @@ func createInboundConfig(proxyPort uint32) (*vcore.InboundHandlerConfig, error) 
 	return inboundDetourConfig.Build()
 }
 
+func addInboundHandler(server *vcore.Instance) (string, error) {
+	const proxyPort = 8899
+	inboundConfig, err := createInboundConfig(proxyPort)
+	if err != nil {
+		return "", err
+	}
+	err = vcore.AddInboundHandler(server, inboundConfig)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort), nil
+}
+
 func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	os.Setenv("v2ray.location.asset", assetPath)
 	server, err := startInstance(profile)
@@ -657,7 +670,12 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 		return 0, err
 	}
 	defer server.Close()
-	socksProxy := "socks5://127.0.0.1:8088"
+	runtime.GC()
+	// socksProxy := "socks5//127.0.0.1:8088"
+	socksProxy, err := addInboundHandler(server)
+	if err != nil {
+		return 0, err
+	}
 	return testLatency(socksProxy)
 }
 
@@ -669,30 +687,9 @@ func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
 	}
 	defer server.Close()
 	runtime.GC()
-	// register inbound
-	const proxyPort = 8899
-	// inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
-	// 	Auth: "noauth",
-	// 	IP:   "127.0.0.1",
-	// 	UDP:  true,
-	// })
-	// inboundsSettingsMsg := json.RawMessage(inboundsSettings)
-	// inboundDetourConfig := conf.InboundDetourConfig{
-	// 	Tag:       "socks-in",
-	// 	Protocol:  "socks",
-	// 	PortRange: &conf.PortRange{From: proxyPort, To: proxyPort},
-	// 	ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-	// 	Settings:  &inboundsSettingsMsg,
-	// }
-	// inboundConfig, err := inboundDetourConfig.Build()
-	// if err != nil {
-	// 	return 0, err
-	// }
-	inboundConfig, err := createInboundConfig(proxyPort)
+	socksProxy, err := addInboundHandler(server)
 	if err != nil {
 		return 0, err
 	}
-	vcore.AddInboundHandler(server, inboundConfig)
-	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort)
 	return testLatency(socksProxy)
 }
