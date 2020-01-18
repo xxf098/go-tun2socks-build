@@ -8,7 +8,10 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -597,4 +600,42 @@ func TestConfig(ConfigureFileContent string, assetperfix string) error {
 	// os.Setenv("v2ray.location.asset", assetperfix)
 	_, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
 	return err
+}
+
+func testLatency(proxy string) (int64, error) {
+	socksProxyURL, err := url.Parse(proxy)
+	if err != nil {
+		return 0, err
+	}
+	socksTransport := &http.Transport{Proxy: http.ProxyURL(socksProxyURL)}
+	client := &http.Client{Transport: socksTransport, Timeout: time.Second * 3}
+	start := time.Now()
+	resp, err := client.Get("https://clients3.google.com/generate_204")
+	if err != nil {
+		return 0, err
+	}
+	elapsed := time.Since(start)
+	defer resp.Body.Close()
+	if err != nil {
+		return 0, err
+	}
+	// fmt.Println(resp.Status)
+	// fmt.Println(resp.StatusCode)
+	if resp.StatusCode == 204 {
+		return elapsed.Milliseconds(), nil
+	}
+	return 0, newError(resp.Status)
+}
+
+func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
+	os.Setenv("v2ray.location.asset", assetPath)
+	server, err := vcore.StartInstance("json", configBytes)
+	if err != nil {
+		return 0, err
+	}
+	defer server.Close()
+	runtime.GC()
+	// TODO
+	socksProxy := "socks5://127.0.0.1:8089"
+	return testLatency(socksProxy)
 }
