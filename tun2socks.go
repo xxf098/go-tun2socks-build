@@ -25,6 +25,7 @@ import (
 	vcommonlog "v2ray.com/core/common/log"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
+	vinbound "v2ray.com/core/features/inbound"
 	"v2ray.com/core/infra/conf"
 	v2serial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
@@ -628,10 +629,6 @@ func testLatency(proxy string) (int64, error) {
 }
 
 func createInboundConfig(proxyPort uint32) (*vcore.InboundHandlerConfig, error) {
-	// inboundManager := server.GetFeature(vinbound.ManagerType()).(vinbound.Manager)
-	// if inboundManager == nil {
-	// 	return 0, newError("No Proxy")
-	// }
 	// inboundManager.RemoveHandler(context.Background(), "socks-in")
 	// inboundManager.RemoveHandler(context.Background(), "http-in")
 	inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
@@ -651,6 +648,13 @@ func createInboundConfig(proxyPort uint32) (*vcore.InboundHandlerConfig, error) 
 }
 
 func addInboundHandler(server *vcore.Instance) (string, error) {
+	if inboundManager := server.GetFeature(vinbound.ManagerType()).(vinbound.Manager); inboundManager != nil {
+		if _, err := inboundManager.GetHandler(context.Background(), "socks-in"); err == nil {
+			if err := inboundManager.RemoveHandler(context.Background(), "socks-in"); err != nil {
+				return "", err
+			}
+		}
+	}
 	const proxyPort = 8899
 	inboundConfig, err := createInboundConfig(proxyPort)
 	if err != nil {
@@ -671,7 +675,7 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	}
 	defer server.Close()
 	runtime.GC()
-	// socksProxy := "socks5//127.0.0.1:8088"
+	// socksProxy := "socks5://127.0.0.1:8088"
 	socksProxy, err := addInboundHandler(server)
 	if err != nil {
 		return 0, err
