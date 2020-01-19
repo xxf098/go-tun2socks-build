@@ -239,46 +239,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		// 	ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		// },
 	}
-
-	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
-		Vnext: []v2ray.Vnext{
-			v2ray.Vnext{
-				Address: profile.Add,
-				Port:    profile.Port,
-				Users: []v2ray.Users{
-					v2ray.Users{
-						AlterID:  profile.Aid,
-						Email:    "v2ray@email.com",
-						ID:       profile.ID,
-						Security: "auto",
-					},
-				},
-			},
-		},
-	})
-	outboundsSettingsMsg1 := json.RawMessage(outboundsSettings1)
-	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
-		Protocol:      "vmess",
-		Tag:           "proxy",
-		MuxSettings:   &conf.MuxConfig{Enabled: true, Concurrency: 16},
-		Settings:      &outboundsSettingsMsg1,
-		StreamSetting: &conf.StreamConfig{},
-	}
-	if profile.Net == "ws" {
-		transportProtocol := conf.TransportProtocol(profile.Net)
-		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
-			Network:    &transportProtocol,
-			WSSettings: &conf.WebSocketConfig{Path: profile.Path},
-		}
-		if profile.Host != "" {
-			vmessOutboundDetourConfig.StreamSetting.WSSettings.Headers =
-				map[string]string{"Host": profile.Host}
-		}
-	}
-	if profile.TLS == "tls" {
-		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
-		vmessOutboundDetourConfig.StreamSetting.TLSSettings = &conf.TLSConfig{Insecure: true}
-	}
+	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
 	// second
 	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
 	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
@@ -294,10 +255,34 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	return jsonConfig, nil
 }
 
-func startInstance(profile *Vmess) (*vcore.Instance, error) {
-	config, err := loadVmessConfig(profile)
-	if err != nil {
-		return nil, err
+func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
+	jsonConfig := &conf.Config{}
+	jsonConfig.LogConfig = &conf.LogConfig{
+		LogLevel: profile.Loglevel,
+	}
+	// https://github.com/Loyalsoldier/v2ray-rules-dat
+	jsonConfig.DNSConfig = &conf.DnsConfig{
+		Servers: []*conf.NameServerConfig{
+			&conf.NameServerConfig{
+				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+				Port:    53,
+			},
+		},
+	}
+	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
+	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+		vmessOutboundDetourConfig,
+	}
+	return jsonConfig, nil
+}
+
+func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error) {
+	if config == nil {
+		defaultConfig, err := loadVmessConfig(profile)
+		if err != nil {
+			return nil, err
+		}
+		config = defaultConfig
 	}
 	coreConfig, err := config.Build()
 	if err != nil {
@@ -488,7 +473,7 @@ func StartV2RayWithVmess(
 		// 	return err
 		// }
 		// v, err = vcore.StartInstance("json", configBytes)
-		v, err = startInstance(profile)
+		v, err = startInstance(profile, nil)
 		if err != nil {
 			log.Fatalf("start V instance failed: %v", err)
 			return err
@@ -602,7 +587,11 @@ func TestConfig(ConfigureFileContent string, assetperfix string) error {
 
 func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	os.Setenv("v2ray.location.asset", assetPath)
-	server, err := startInstance(profile)
+	config, err := loadVmessTestConfig(profile)
+	if err != nil {
+		return 0, err
+	}
+	server, err := startInstance(profile, config)
 	if err != nil {
 		return 0, err
 	}
