@@ -28,10 +28,10 @@ func testLatency(proxy string) (int64, error) {
 	client := &http.Client{Transport: socksTransport, Timeout: time.Second * 3}
 	start := time.Now()
 	resp, err := client.Get("https://clients3.google.com/generate_204")
+	elapsed := time.Since(start)
 	if err != nil {
 		return 0, err
 	}
-	elapsed := time.Since(start)
 	defer resp.Body.Close()
 	if err != nil {
 		return 0, err
