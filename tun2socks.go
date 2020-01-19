@@ -260,7 +260,6 @@ func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
 	jsonConfig.LogConfig = &conf.LogConfig{
 		LogLevel: profile.Loglevel,
 	}
-	// https://github.com/Loyalsoldier/v2ray-rules-dat
 	jsonConfig.DNSConfig = &conf.DnsConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{
@@ -269,9 +268,11 @@ func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
 			},
 		},
 	}
-	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
+	jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
+		createInboundDetourConfig(testProxyPort),
+	}
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
-		vmessOutboundDetourConfig,
+		createVmessOutboundDetourConfig(profile),
 	}
 	return jsonConfig, nil
 }
@@ -597,8 +598,8 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	}
 	defer server.Close()
 	runtime.GC()
-	// socksProxy := "socks5://127.0.0.1:8088"
-	socksProxy, err := addInboundHandler(server)
+	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", testProxyPort)
+	// socksProxy, err := addInboundHandler(server)
 	if err != nil {
 		return 0, err
 	}

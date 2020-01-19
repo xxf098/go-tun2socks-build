@@ -15,6 +15,10 @@ import (
 	"v2ray.com/core/infra/conf"
 )
 
+const (
+	testProxyPort = 8899
+)
+
 func testLatency(proxy string) (int64, error) {
 	socksProxyURL, err := url.Parse(proxy)
 	if err != nil {
@@ -40,7 +44,27 @@ func testLatency(proxy string) (int64, error) {
 	return 0, newError(resp.Status)
 }
 
-func createInboundConfig(proxyPort uint32) (*vcore.InboundHandlerConfig, error) {
+func addInboundHandler(server *vcore.Instance) (string, error) {
+	if inboundManager := server.GetFeature(vinbound.ManagerType()).(vinbound.Manager); inboundManager != nil {
+		if _, err := inboundManager.GetHandler(context.Background(), "socks-in"); err == nil {
+			if err := inboundManager.RemoveHandler(context.Background(), "socks-in"); err != nil {
+				return "", err
+			}
+		}
+	}
+	inboundDetourConfig := createInboundDetourConfig(testProxyPort)
+	inboundConfig, err := inboundDetourConfig.Build()
+	if err != nil {
+		return "", err
+	}
+	err = vcore.AddInboundHandler(server, inboundConfig)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("socks5://127.0.0.1:%d", testProxyPort), nil
+}
+
+func createInboundDetourConfig(proxyPort uint32) conf.InboundDetourConfig {
 	// inboundManager.RemoveHandler(context.Background(), "socks-in")
 	// inboundManager.RemoveHandler(context.Background(), "http-in")
 	inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
@@ -56,27 +80,7 @@ func createInboundConfig(proxyPort uint32) (*vcore.InboundHandlerConfig, error) 
 		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		Settings:  &inboundsSettingsMsg,
 	}
-	return inboundDetourConfig.Build()
-}
-
-func addInboundHandler(server *vcore.Instance) (string, error) {
-	if inboundManager := server.GetFeature(vinbound.ManagerType()).(vinbound.Manager); inboundManager != nil {
-		if _, err := inboundManager.GetHandler(context.Background(), "socks-in"); err == nil {
-			if err := inboundManager.RemoveHandler(context.Background(), "socks-in"); err != nil {
-				return "", err
-			}
-		}
-	}
-	const proxyPort = 8899
-	inboundConfig, err := createInboundConfig(proxyPort)
-	if err != nil {
-		return "", err
-	}
-	err = vcore.AddInboundHandler(server, inboundConfig)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort), nil
+	return inboundDetourConfig
 }
 
 func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
