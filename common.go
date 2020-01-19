@@ -17,6 +17,7 @@ import (
 
 const (
 	testProxyPort = 8899
+	testUrl       = "https://www.google.com/generate_204"
 )
 
 func testLatency(proxy string) (int64, error) {
@@ -26,9 +27,7 @@ func testLatency(proxy string) (int64, error) {
 	}
 	socksTransport := &http.Transport{Proxy: http.ProxyURL(socksProxyURL)}
 	client := &http.Client{Transport: socksTransport, Timeout: time.Second * 3}
-	start := time.Now()
-	resp, err := client.Get("https://clients3.google.com/generate_204")
-	elapsed := time.Since(start)
+	resp, err := client.Get(testUrl)
 	if err != nil {
 		return 0, err
 	}
@@ -39,7 +38,16 @@ func testLatency(proxy string) (int64, error) {
 	// fmt.Println(resp.Status)
 	// fmt.Println(resp.StatusCode)
 	if resp.StatusCode == 204 {
-		return elapsed.Milliseconds(), nil
+		start := time.Now()
+		resp1, err := client.Get(testUrl)
+		elapsed := time.Since(start)
+		if err != nil {
+			return 0, err
+		}
+		defer resp1.Body.Close()
+		if resp1.StatusCode == 204 {
+			return elapsed.Milliseconds(), nil
+		}
 	}
 	return 0, newError(resp.Status)
 }
