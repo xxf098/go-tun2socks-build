@@ -78,3 +78,46 @@ func addInboundHandler(server *vcore.Instance) (string, error) {
 	}
 	return fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort), nil
 }
+
+func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
+	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
+		Vnext: []v2ray.Vnext{
+			v2ray.Vnext{
+				Address: profile.Add,
+				Port:    profile.Port,
+				Users: []v2ray.Users{
+					v2ray.Users{
+						AlterID:  profile.Aid,
+						Email:    "v2ray@email.com",
+						ID:       profile.ID,
+						Security: "auto",
+					},
+				},
+			},
+		},
+	})
+	outboundsSettingsMsg1 := json.RawMessage(outboundsSettings1)
+	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
+		Protocol:      "vmess",
+		Tag:           "proxy",
+		MuxSettings:   &conf.MuxConfig{Enabled: true, Concurrency: 16},
+		Settings:      &outboundsSettingsMsg1,
+		StreamSetting: &conf.StreamConfig{},
+	}
+	if profile.Net == "ws" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network:    &transportProtocol,
+			WSSettings: &conf.WebSocketConfig{Path: profile.Path},
+		}
+		if profile.Host != "" {
+			vmessOutboundDetourConfig.StreamSetting.WSSettings.Headers =
+				map[string]string{"Host": profile.Host}
+		}
+	}
+	if profile.TLS == "tls" {
+		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
+		vmessOutboundDetourConfig.StreamSetting.TLSSettings = &conf.TLSConfig{Insecure: true}
+	}
+	return vmessOutboundDetourConfig
+}
