@@ -11,10 +11,16 @@ Building and using `go-tun2socks` for V2Ray on Android. This library is used in 
 
 ## Build
 ```bash
+# proxy
 export http_proxy=http://127.0.0.1:8087
 export https_proxy=http://127.0.0.1:8087
+# go
+export GOPATH="~/go"
+export PATH=$PATH:/usr/local/go/bin:~/go/bin
+# android
 export ANDROID_HOME=/path/to/Android/Sdk
 export ANDROID_NDK_HOME=/path/to/Android/android-ndk-r20b
+
 
 go get -d ./...
 
