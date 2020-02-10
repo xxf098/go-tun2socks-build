@@ -16,11 +16,9 @@ import (
 
 	mobasset "golang.org/x/mobile/asset"
 	vcore "v2ray.com/core"
-	vapplog "v2ray.com/core/app/log"
 	vproxyman "v2ray.com/core/app/proxyman"
 	vbytespool "v2ray.com/core/common/bytespool"
 	verrors "v2ray.com/core/common/errors"
-	vcommonlog "v2ray.com/core/common/log"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
 	"v2ray.com/core/infra/conf"
@@ -334,15 +332,6 @@ func SetLocalDNS(dns string) {
 	localDNS = dns
 }
 
-func registerLog(logService LogService) {
-	if logService != nil {
-		vapplog.RegisterHandlerCreator(vapplog.LogType_Console, func(lt vapplog.LogType,
-			options vapplog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
-			return vcommonlog.NewLogger(createLogWriter(logService)), nil
-		})
-	}
-}
-
 // StartV2Ray sets up lwIP stack, starts a V2Ray instance and registers the instance as the
 // connection handler for tun2socks.
 func StartV2Ray(
@@ -364,7 +353,7 @@ func StartV2Ray(
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
 		// log
-		registerLog(logService)
+		registerLogService(logService)
 
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
@@ -449,7 +438,7 @@ func StartV2RayWithVmess(
 		// Assets
 		os.Setenv("v2ray.location.asset", assetPath)
 		// logger
-		registerLog(logService)
+		registerLogService(logService)
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 		protectFd := func(s VpnService, fd int) error {
 			if s.Protect(fd) {

@@ -1,6 +1,10 @@
 package tun2socks
 
-import vcommonlog "v2ray.com/core/common/log"
+import (
+	alog "v2ray.com/core/app/log"
+	"v2ray.com/core/common"
+	vcommonlog "v2ray.com/core/common/log"
+)
 
 type LogService interface {
 	WriteLog(s string) error
@@ -24,5 +28,14 @@ func createLogWriter(logService LogService) vcommonlog.WriterCreator {
 		return &logWriter{
 			logger: &logService,
 		}
+	}
+}
+
+func registerLogService(logService LogService) {
+	if logService != nil {
+		common.Must(alog.RegisterHandlerCreator(alog.LogType_Console, func(lt alog.LogType,
+			options alog.HandlerCreatorOptions) (vcommonlog.Handler, error) {
+			return vcommonlog.NewLogger(createLogWriter(logService)), nil
+		}))
 	}
 }
