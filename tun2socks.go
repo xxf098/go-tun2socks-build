@@ -180,41 +180,9 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		LogLevel: profile.Loglevel,
 	}
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
-	jsonConfig.DNSConfig = &conf.DnsConfig{
-		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
-				Port:    53,
-				// Domains: []string{"geosite:cn"},
-			},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
-		},
-		Hosts: v2ray.BlockHosts,
-	}
-	domainStrategy := "IPIfNonMatch"
-	rule1, _ := json.Marshal(v2ray.Rules{
-		Type:        "field",
-		OutboundTag: "direct",
-		IP:          []string{"geoip:private", "geoip:cn"},
-	})
-	rule2, _ := json.Marshal(v2ray.Rules{
-		Type:        "field",
-		OutboundTag: "direct",
-		Domain:      []string{"geosite:cn"},
-	})
-	rule3, _ := json.Marshal(v2ray.Rules{
-		Type:        "field",
-		OutboundTag: "blocked",
-		Domain:      v2ray.BlockDomains,
-	})
+	jsonConfig.DNSConfig = createDNSConfig()
 	// update rules
-	jsonConfig.RouterConfig = &conf.RouterConfig{
-		DomainStrategy: &domainStrategy,
-		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2), json.RawMessage(rule3)},
-	}
+	jsonConfig.RouterConfig = createRouterConfig()
 	// inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
 	// 	Auth: "noauth",
 	// 	IP:   "127.0.0.1",
@@ -237,20 +205,151 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// 	},
 	// }
 	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
-	// second
-	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
-	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
+	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig()
 	// order matters
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 		vmessOutboundDetourConfig,
-		conf.OutboundDetourConfig{
-			Protocol: "freedom",
-			Tag:      "direct",
-			Settings: &outboundsSettingsMsg2,
-		},
+		freedomOutboundDetourConfig,
 	}
 	return jsonConfig, nil
 }
+
+// func logConfig(logLevel string) *vlog.Config {
+// 	config := &vlog.Config{
+// 		ErrorLogLevel: clog.Severity_Warning,
+// 		ErrorLogType:  vlog.LogType_Console,
+// 		AccessLogType: vlog.LogType_Console,
+// 	}
+// 	level := strings.ToLower(logLevel)
+// 	switch level {
+// 	case "debug":
+// 		config.ErrorLogLevel = clog.Severity_Debug
+// 	case "info":
+// 		config.ErrorLogLevel = clog.Severity_Info
+// 	case "error":
+// 		config.ErrorLogLevel = clog.Severity_Error
+// 	case "none":
+// 		config.ErrorLogType = vlog.LogType_None
+// 		config.AccessLogType = vlog.LogType_None
+// 	}
+// 	return config
+// }
+
+// func vmessToCoreConfig(profile *Vmess, inboundDetourConfig *conf.InboundDetourConfig) (*vcore.Config, error) {
+// 	// vmess outbound
+// 	vmessUser, _ := json.Marshal(conf.VMessAccount{
+// 		ID:       profile.ID,
+// 		AlterIds: uint16(profile.Aid),
+// 		Security: "auto",
+// 	})
+// 	vmessOutboundConfig := conf.VMessOutboundConfig{
+// 		Receivers: []*conf.VMessOutboundTarget{
+// 			&conf.VMessOutboundTarget{
+// 				Address: &conf.Address{Address: vnet.NewIPOrDomain(vnet.ParseAddress(profile.Add)).AsAddress()},
+// 				Port:    uint16(profile.Port),
+// 				Users:   []json.RawMessage{json.RawMessage(vmessUser)},
+// 			},
+// 		},
+// 	}
+// 	oc, err := vmessOutboundConfig.Build()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	outboundProxy := vcomserial.ToTypedMessage(oc)
+
+// 	// freedom proxy
+// 	freedomOutboundsSettings, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
+// 	freedomOutboundsSettingsMsg := json.RawMessage(freedomOutboundsSettings)
+// 	freedomProxy := conf.OutboundDetourConfig{
+// 		Protocol: "freedom",
+// 		Tag:      "direct",
+// 		Settings: &freedomOutboundsSettingsMsg,
+// 	}
+// 	freedomConf, err := freedomProxy.Build()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var transportSettings proto.Message
+// 	var connectionReuse bool
+// 	mode := profile.Net
+// 	switch profile.Net {
+// 	case "ws":
+// 		transportSettings = &websocket.Config{
+// 			Path: profile.Path,
+// 			Header: []*websocket.Header{
+// 				{Key: "Host", Value: profile.Host},
+// 			},
+// 		}
+// 		connectionReuse = true
+// 		mode = "websocket"
+// 	case "quic":
+// 		transportSettings = &quic.Config{
+// 			Security: &protocol.SecurityConfig{Type: protocol.SecurityType_NONE},
+// 		}
+// 		profile.TLS = "tls"
+// 	case "":
+// 	default:
+// 		return nil, newError("unsupported mode:", profile.Net)
+// 	}
+
+// 	streamConfig := vinternet.StreamConfig{
+// 		ProtocolName: mode,
+// 		TransportSettings: []*vinternet.TransportConfig{{
+// 			ProtocolName: mode,
+// 			Settings:     vcomserial.ToTypedMessage(transportSettings),
+// 		}},
+// 	}
+// 	// TODO: support cert
+// 	if profile.TLS == "tls" {
+// 		tlsConfig := tls.Config{ServerName: profile.Host}
+// 		streamConfig.SecurityType = vcomserial.GetMessageType(&tlsConfig)
+// 		streamConfig.SecuritySettings = []*vcomserial.TypedMessage{vcomserial.ToTypedMessage(&tlsConfig)}
+// 	}
+// 	//router config
+// 	routerConfig, err := createRouterConfig().Build()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// dns config
+// 	dnsConfig, err := createDNSConfig().Build()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	apps := []*vcomserial.TypedMessage{
+// 		vcomserial.ToTypedMessage(&dispatcher.Config{}),
+// 		vcomserial.ToTypedMessage(&vproxyman.InboundConfig{}),
+// 		vcomserial.ToTypedMessage(&vproxyman.OutboundConfig{}),
+// 		vcomserial.ToTypedMessage(logConfig(profile.Loglevel)),
+// 		vcomserial.ToTypedMessage(routerConfig),
+// 		vcomserial.ToTypedMessage(dnsConfig),
+// 	}
+// 	senderConfig := vproxyman.SenderConfig{StreamSettings: &streamConfig}
+// 	if connectionReuse {
+// 		senderConfig.MultiplexSettings = &vproxyman.MultiplexingConfig{Enabled: true, Concurrency: 16}
+// 	}
+// 	vcoreconfig := vcore.Config{
+// 		Outbound: []*vcore.OutboundHandlerConfig{
+// 			{
+// 				SenderSettings: vcomserial.ToTypedMessage(&senderConfig),
+// 				ProxySettings:  outboundProxy,
+// 				Tag:            "proxy",
+// 			},
+// 			freedomConf,
+// 		},
+// 		App: apps,
+// 	}
+// 	if inboundDetourConfig != nil {
+// 		inboundConfig, err := inboundDetourConfig.Build()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		vcoreconfig.Inbound = []*vcore.InboundHandlerConfig{
+// 			inboundConfig,
+// 		}
+// 	}
+// 	return &vcoreconfig, nil
+// }
 
 func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
 	jsonConfig := &conf.Config{}
@@ -588,9 +687,6 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	runtime.GC()
 	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", testProxyPort)
 	// socksProxy, err := addInboundHandler(server)
-	if err != nil {
-		return 0, err
-	}
 	return testLatency(socksProxy)
 }
 
