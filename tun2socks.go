@@ -36,7 +36,7 @@ var v *vcore.Instance
 var isStopped = false
 
 const (
-	v2Assert = "v2ray.location.asset"
+	v2Asset = "v2ray.location.asset"
 )
 
 type errPathObjHolder struct{}
@@ -648,12 +648,12 @@ func CopyAssets(assetDir string, force bool) error {
 }
 
 func initV2Env(assetperfix string) {
-	if os.Getenv(v2Assert) != "" {
+	if os.Getenv(v2Asset) != "" {
 		return
 	}
 	//Initialize asset API, Since Raymond Will not let notify the asset location inside Process,
 	//We need to set location outside V2Ray
-	os.Setenv(v2Assert, assetperfix)
+	os.Setenv(v2Asset, assetperfix)
 	//Now we handle read
 	v2filesystem.NewFileReader = func(path string) (io.ReadCloser, error) {
 		if strings.HasPrefix(path, assetperfix) {
