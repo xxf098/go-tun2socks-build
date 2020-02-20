@@ -58,6 +58,10 @@ type Wssettings struct {
 	Path            string  `json:"path"`
 }
 
+type QUICSettingsHeader struct {
+	Type string `json:"type"`
+}
+
 type TLSSettings struct {
 	AllowInsecure bool `json:"allowInsecure"`
 }

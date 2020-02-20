@@ -55,6 +55,7 @@ type Vmess struct {
 	Aid      int
 	Net      string
 	ID       string
+	Type     string // headerType
 	Loglevel string
 }
 

@@ -127,6 +127,22 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 				map[string]string{"Host": profile.Host}
 		}
 	}
+
+	if profile.Net == "quic" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network:      &transportProtocol,
+			QUICSettings: &conf.QUICConfig{Key: profile.Path},
+		}
+		if profile.Host != "" {
+			vmessOutboundDetourConfig.StreamSetting.QUICSettings.Security = profile.Host
+		}
+		if profile.Type != "" {
+			header, _ := json.Marshal(v2ray.QUICSettingsHeader{Type: profile.Type})
+			vmessOutboundDetourConfig.StreamSetting.QUICSettings.Header = json.RawMessage(header)
+		}
+	}
+
 	if profile.TLS == "tls" {
 		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
 		tlsConfig := &conf.TLSConfig{Insecure: true}
