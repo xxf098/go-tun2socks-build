@@ -62,6 +62,10 @@ type QUICSettingsHeader struct {
 	Type string `json:"type"`
 }
 
+type KCPSettingsHeader struct {
+	Type string `json:"type"`
+}
+
 type TLSSettings struct {
 	AllowInsecure bool `json:"allowInsecure"`
 }

@@ -128,6 +128,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 				map[string]string{"Host": profile.Host}
 		}
 	}
+
 	if profile.Net == "h2" {
 		transportProtocol := conf.TransportProtocol(profile.Net)
 		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
@@ -152,6 +153,33 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		if profile.Type != "" {
 			header, _ := json.Marshal(v2ray.QUICSettingsHeader{Type: profile.Type})
 			vmessOutboundDetourConfig.StreamSetting.QUICSettings.Header = json.RawMessage(header)
+		}
+	}
+
+	if profile.Net == "kcp" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		mtu := uint32(1350)
+		tti := uint32(50)
+		upCap := uint32(12)
+		downap := uint32(100)
+		congestion := false
+		readBufferSize := uint32(1)
+		writeBufferSize := uint32(1)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network: &transportProtocol,
+			KCPSettings: &conf.KCPConfig{
+				Mtu:             &mtu,
+				Tti:             &tti,
+				UpCap:           &upCap,
+				DownCap:         &downap,
+				Congestion:      &congestion,
+				ReadBufferSize:  &readBufferSize,
+				WriteBufferSize: &writeBufferSize,
+			},
+		}
+		if profile.Type != "" {
+			header, _ := json.Marshal(v2ray.KCPSettingsHeader{Type: profile.Type})
+			vmessOutboundDetourConfig.StreamSetting.KCPSettings.HeaderConfig = json.RawMessage(header)
 		}
 	}
 
