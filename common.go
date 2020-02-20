@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/xxf098/go-tun2socks-build/v2ray"
@@ -125,6 +126,17 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		if profile.Host != "" {
 			vmessOutboundDetourConfig.StreamSetting.WSSettings.Headers =
 				map[string]string{"Host": profile.Host}
+		}
+	}
+	if profile.Net == "h2" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network:      &transportProtocol,
+			HTTPSettings: &conf.HTTPConfig{Path: profile.Path},
+		}
+		if profile.Host != "" {
+			hosts := strings.Split(profile.Host, ",")
+			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = conf.NewStringList(hosts)
 		}
 	}
 
