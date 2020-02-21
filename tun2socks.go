@@ -59,7 +59,8 @@ type Vmess struct {
 	Loglevel string
 }
 
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Loglevel string) *Vmess {
+// TODO: default value
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Loglevel string) *Vmess {
 	return &Vmess{
 		Host:     Host,
 		Path:     Path,
@@ -69,6 +70,7 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		Aid:      Aid,
 		Net:      Net,
 		ID:       ID,
+		Type:     Type,
 		Loglevel: Loglevel,
 	}
 }
