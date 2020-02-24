@@ -13,7 +13,7 @@ import (
 	vcore "v2ray.com/core"
 	vnet "v2ray.com/core/common/net"
 	vinbound "v2ray.com/core/features/inbound"
-	"v2ray.com/core/infra/conf"
+	vconf "v2ray.com/core/infra/conf"
 )
 
 const (
@@ -73,7 +73,7 @@ func addInboundHandler(server *vcore.Instance) (string, error) {
 	return fmt.Sprintf("socks5://127.0.0.1:%d", testProxyPort), nil
 }
 
-func createInboundDetourConfig(proxyPort uint32) conf.InboundDetourConfig {
+func createInboundDetourConfig(proxyPort uint32) vconf.InboundDetourConfig {
 	// inboundManager.RemoveHandler(context.Background(), "socks-in")
 	// inboundManager.RemoveHandler(context.Background(), "http-in")
 	inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
@@ -82,17 +82,17 @@ func createInboundDetourConfig(proxyPort uint32) conf.InboundDetourConfig {
 		UDP:  true,
 	})
 	inboundsSettingsMsg := json.RawMessage(inboundsSettings)
-	inboundDetourConfig := conf.InboundDetourConfig{
+	inboundDetourConfig := vconf.InboundDetourConfig{
 		Tag:       "socks-in",
 		Protocol:  "socks",
-		PortRange: &conf.PortRange{From: proxyPort, To: proxyPort},
-		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		PortRange: &vconf.PortRange{From: proxyPort, To: proxyPort},
+		ListenOn:  &vconf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		Settings:  &inboundsSettingsMsg,
 	}
 	return inboundDetourConfig
 }
 
-func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
+func createVmessOutboundDetourConfig(profile *Vmess) vconf.OutboundDetourConfig {
 	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
 		Vnext: []v2ray.Vnext{
 			v2ray.Vnext{
@@ -110,18 +110,18 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		},
 	})
 	outboundsSettingsMsg1 := json.RawMessage(outboundsSettings1)
-	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
+	vmessOutboundDetourConfig := vconf.OutboundDetourConfig{
 		Protocol:      "vmess",
 		Tag:           "proxy",
-		MuxSettings:   &conf.MuxConfig{Enabled: true, Concurrency: 16},
+		MuxSettings:   &vconf.MuxConfig{Enabled: true, Concurrency: 16},
 		Settings:      &outboundsSettingsMsg1,
-		StreamSetting: &conf.StreamConfig{},
+		StreamSetting: &vconf.StreamConfig{},
 	}
 	if profile.Net == "ws" {
-		transportProtocol := conf.TransportProtocol(profile.Net)
-		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+		transportProtocol := vconf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &vconf.StreamConfig{
 			Network:    &transportProtocol,
-			WSSettings: &conf.WebSocketConfig{Path: profile.Path},
+			WSSettings: &vconf.WebSocketConfig{Path: profile.Path},
 		}
 		if profile.Host != "" {
 			vmessOutboundDetourConfig.StreamSetting.WSSettings.Headers =
@@ -130,22 +130,22 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	}
 
 	if profile.Net == "h2" {
-		transportProtocol := conf.TransportProtocol(profile.Net)
-		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+		transportProtocol := vconf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &vconf.StreamConfig{
 			Network:      &transportProtocol,
-			HTTPSettings: &conf.HTTPConfig{Path: profile.Path},
+			HTTPSettings: &vconf.HTTPConfig{Path: profile.Path},
 		}
 		if profile.Host != "" {
 			hosts := strings.Split(profile.Host, ",")
-			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = conf.NewStringList(hosts)
+			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = vconf.NewStringList(hosts)
 		}
 	}
 
 	if profile.Net == "quic" {
-		transportProtocol := conf.TransportProtocol(profile.Net)
-		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+		transportProtocol := vconf.TransportProtocol(profile.Net)
+		vmessOutboundDetourConfig.StreamSetting = &vconf.StreamConfig{
 			Network:      &transportProtocol,
-			QUICSettings: &conf.QUICConfig{Key: profile.Path},
+			QUICSettings: &vconf.QUICConfig{Key: profile.Path},
 		}
 		if profile.Host != "" {
 			vmessOutboundDetourConfig.StreamSetting.QUICSettings.Security = profile.Host
@@ -157,7 +157,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	}
 
 	if profile.Net == "kcp" {
-		transportProtocol := conf.TransportProtocol(profile.Net)
+		transportProtocol := vconf.TransportProtocol(profile.Net)
 		mtu := uint32(1350)
 		tti := uint32(50)
 		upCap := uint32(12)
@@ -165,9 +165,9 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		congestion := false
 		readBufferSize := uint32(1)
 		writeBufferSize := uint32(1)
-		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+		vmessOutboundDetourConfig.StreamSetting = &vconf.StreamConfig{
 			Network: &transportProtocol,
-			KCPSettings: &conf.KCPConfig{
+			KCPSettings: &vconf.KCPConfig{
 				Mtu:             &mtu,
 				Tti:             &tti,
 				UpCap:           &upCap,
@@ -185,7 +185,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 
 	if profile.TLS == "tls" {
 		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
-		tlsConfig := &conf.TLSConfig{Insecure: true}
+		tlsConfig := &vconf.TLSConfig{Insecure: true}
 		if profile.Host != "" {
 			tlsConfig.ServerName = profile.Host
 		}
@@ -194,17 +194,17 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	return vmessOutboundDetourConfig
 }
 
-func createFreedomOutboundDetourConfig() conf.OutboundDetourConfig {
+func createFreedomOutboundDetourConfig() vconf.OutboundDetourConfig {
 	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
 	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
-	return conf.OutboundDetourConfig{
+	return vconf.OutboundDetourConfig{
 		Protocol: "freedom",
 		Tag:      "direct",
 		Settings: &outboundsSettingsMsg2,
 	}
 }
 
-func createRouterConfig() *conf.RouterConfig {
+func createRouterConfig() *vconf.RouterConfig {
 	domainStrategy := "IPIfNonMatch"
 	rule1, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
@@ -221,24 +221,24 @@ func createRouterConfig() *conf.RouterConfig {
 		OutboundTag: "blocked",
 		Domain:      v2ray.BlockDomains,
 	})
-	return &conf.RouterConfig{
+	return &vconf.RouterConfig{
 		DomainStrategy: &domainStrategy,
 		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2), json.RawMessage(rule3)},
 	}
 }
 
-func createDNSConfig() *conf.DnsConfig {
-	return &conf.DnsConfig{
-		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+func createDNSConfig() *vconf.DnsConfig {
+	return &vconf.DnsConfig{
+		Servers: []*vconf.NameServerConfig{
+			&vconf.NameServerConfig{
+				Address: &vconf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
 				// Domains: []string{"geosite:cn"},
 			},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
+			// &vconf.NameServerConfig{Address: &vconf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
+			// &vconf.NameServerConfig{Address: &vconf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			&vconf.NameServerConfig{Address: &vconf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
+			// &vconf.NameServerConfig{Address: &vconf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
 		Hosts: v2ray.BlockHosts,
 	}

@@ -21,7 +21,7 @@ import (
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
-	"v2ray.com/core/infra/conf"
+	vconf "v2ray.com/core/infra/conf"
 	v2serial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
 
@@ -79,7 +79,7 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 // 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
 // }
 
-// TODO: try with native struct config conf.vmess
+// TODO: try with native struct config vconf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
 	vmessConfig.Log = v2ray.Log{Access: "", Error: "", Loglevel: profile.Loglevel}
@@ -175,9 +175,9 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	return json.MarshalIndent(vmessConfig, "", "    ")
 }
 
-func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
-	jsonConfig := &conf.Config{}
-	jsonConfig.LogConfig = &conf.LogConfig{
+func loadVmessConfig(profile *Vmess) (*vconf.Config, error) {
+	jsonConfig := &vconf.Config{}
+	jsonConfig.LogConfig = &vconf.LogConfig{
 		// AccessLog: "",
 		// ErrorLog:  "",
 		LogLevel: profile.Loglevel,
@@ -192,25 +192,25 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// 	UDP:  true,
 	// })
 	// inboundsSettingsMsg := json.RawMessage(inboundsSettings)
-	// jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
-	// 	conf.InboundDetourConfig{
+	// jsonConfig.InboundConfigs = []vconf.InboundDetourConfig{
+	// 	vconf.InboundDetourConfig{
 	// 		Tag:       "socks-in",
 	// 		Protocol:  "socks",
-	// 		PortRange: &conf.PortRange{From: 8088, To: 8088},
-	// 		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+	// 		PortRange: &vconf.PortRange{From: 8088, To: 8088},
+	// 		ListenOn:  &vconf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 	// 		Settings:  &inboundsSettingsMsg,
 	// 	},
-	// 	conf.InboundDetourConfig{
+	// 	vconf.InboundDetourConfig{
 	// 		Tag:       "http-in",
 	// 		Protocol:  "http",
-	// 		PortRange: &conf.PortRange{From: 8090, To: 8090},
-	// 		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+	// 		PortRange: &vconf.PortRange{From: 8090, To: 8090},
+	// 		ListenOn:  &vconf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 	// 	},
 	// }
 	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
 	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig()
 	// order matters
-	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+	jsonConfig.OutboundConfigs = []vconf.OutboundDetourConfig{
 		vmessOutboundDetourConfig,
 		freedomOutboundDetourConfig,
 	}
@@ -238,17 +238,17 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 // 	return config
 // }
 
-// func vmessToCoreConfig(profile *Vmess, inboundDetourConfig *conf.InboundDetourConfig) (*vcore.Config, error) {
+// func vmessToCoreConfig(profile *Vmess, inboundDetourConfig *vconf.InboundDetourConfig) (*vcore.Config, error) {
 // 	// vmess outbound
-// 	vmessUser, _ := json.Marshal(conf.VMessAccount{
+// 	vmessUser, _ := json.Marshal(vconf.VMessAccount{
 // 		ID:       profile.ID,
 // 		AlterIds: uint16(profile.Aid),
 // 		Security: "auto",
 // 	})
-// 	vmessOutboundConfig := conf.VMessOutboundConfig{
-// 		Receivers: []*conf.VMessOutboundTarget{
-// 			&conf.VMessOutboundTarget{
-// 				Address: &conf.Address{Address: vnet.NewIPOrDomain(vnet.ParseAddress(profile.Add)).AsAddress()},
+// 	vmessOutboundConfig := vconf.VMessOutboundConfig{
+// 		Receivers: []*vconf.VMessOutboundTarget{
+// 			&vconf.VMessOutboundTarget{
+// 				Address: &vconf.Address{Address: vnet.NewIPOrDomain(vnet.ParseAddress(profile.Add)).AsAddress()},
 // 				Port:    uint16(profile.Port),
 // 				Users:   []json.RawMessage{json.RawMessage(vmessUser)},
 // 			},
@@ -263,7 +263,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 // 	// freedom proxy
 // 	freedomOutboundsSettings, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
 // 	freedomOutboundsSettingsMsg := json.RawMessage(freedomOutboundsSettings)
-// 	freedomProxy := conf.OutboundDetourConfig{
+// 	freedomProxy := vconf.OutboundDetourConfig{
 // 		Protocol: "freedom",
 // 		Tag:      "direct",
 // 		Settings: &freedomOutboundsSettingsMsg,
@@ -354,29 +354,29 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 // 	return &vcoreconfig, nil
 // }
 
-func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
-	jsonConfig := &conf.Config{}
-	jsonConfig.LogConfig = &conf.LogConfig{
+func loadVmessTestConfig(profile *Vmess) (*vconf.Config, error) {
+	jsonConfig := &vconf.Config{}
+	jsonConfig.LogConfig = &vconf.LogConfig{
 		LogLevel: profile.Loglevel,
 	}
-	jsonConfig.DNSConfig = &conf.DnsConfig{
-		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+	jsonConfig.DNSConfig = &vconf.DnsConfig{
+		Servers: []*vconf.NameServerConfig{
+			&vconf.NameServerConfig{
+				Address: &vconf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
 			},
 		},
 	}
-	jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
+	jsonConfig.InboundConfigs = []vconf.InboundDetourConfig{
 		createInboundDetourConfig(testProxyPort),
 	}
-	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+	jsonConfig.OutboundConfigs = []vconf.OutboundDetourConfig{
 		createVmessOutboundDetourConfig(profile),
 	}
 	return jsonConfig, nil
 }
 
-func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error) {
+func startInstance(profile *Vmess, config *vconf.Config) (*vcore.Instance, error) {
 	if config == nil {
 		defaultConfig, err := loadVmessConfig(profile)
 		if err != nil {

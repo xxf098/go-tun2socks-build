@@ -2,13 +2,13 @@ package v2ray
 
 import (
 	vnet "v2ray.com/core/common/net"
-	"v2ray.com/core/infra/conf"
+	vconf "v2ray.com/core/infra/conf"
 )
 
-var localhost = &conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
+var localhost = &vconf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
 
 // no prefix is fullmatch
-var BlockHosts = map[string]*conf.Address{
+var BlockHosts = map[string]*vconf.Address{
 	// "domain:umeng.com": localhost,
 	// "domain:baidu.com":       localhost,
 	// "domain:sogou.com":       localhost,
