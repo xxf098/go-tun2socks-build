@@ -647,17 +647,17 @@ func CopyAssets(assetDir string, force bool) error {
 	return nil
 }
 
-func initV2Env(assetperfix string) {
+func initV2Env(assetPrefix string) {
 	if os.Getenv(v2Asset) != "" {
 		return
 	}
 	//Initialize asset API, Since Raymond Will not let notify the asset location inside Process,
 	//We need to set location outside V2Ray
-	os.Setenv(v2Asset, assetperfix)
+	os.Setenv(v2Asset, assetPrefix)
 	//Now we handle read
 	v2filesystem.NewFileReader = func(path string) (io.ReadCloser, error) {
-		if strings.HasPrefix(path, assetperfix) {
-			p := path[len(assetperfix)+1:]
+		if strings.HasPrefix(path, assetPrefix) {
+			p := path[len(assetPrefix)+1:]
 			//is it overridden?
 			//by, ok := overridedAssets[p]
 			//if ok {
@@ -669,9 +669,9 @@ func initV2Env(assetperfix string) {
 	}
 }
 
-func TestConfig(ConfigureFileContent string, assetperfix string) error {
-	initV2Env(assetperfix)
-	// os.Setenv("v2ray.location.asset", assetperfix)
+func TestConfig(ConfigureFileContent string, assetPrefix string) error {
+	initV2Env(assetPrefix)
+	// os.Setenv("v2ray.location.asset", assetPrefix)
 	_, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
 	return err
 }
