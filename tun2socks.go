@@ -669,10 +669,10 @@ func initV2Env(assetPrefix string) {
 	}
 }
 
-func TestConfig(ConfigureFileContent string, assetPrefix string) error {
+func TestConfig(configFileContent string, assetPrefix string) error {
 	initV2Env(assetPrefix)
 	// os.Setenv("v2ray.location.asset", assetPrefix)
-	_, err := v2serial.LoadJSONConfig(strings.NewReader(ConfigureFileContent))
+	_, err := v2serial.LoadJSONConfig(strings.NewReader(configFileContent))
 	return err
 }
 
