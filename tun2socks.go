@@ -29,11 +29,12 @@ import (
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 )
 
-var localDNS = "223.5.5.5:53"
 var err error
 var lwipStack core.LWIPStack
 var v *vcore.Instance
+
 var isStopped = false
+var localDNS = "223.5.5.5:53"
 
 const (
 	v2Asset = "v2ray.location.asset"
