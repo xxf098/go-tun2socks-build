@@ -563,11 +563,6 @@ func StartV2RayWithVmess(
 	core.SetBufferPool(vbytespool.GetPool(core.BufSize))
 
 	// Start the V2Ray instance.
-	// configBytes, err := generateVmessConfig(profile)
-	// if err != nil {
-	// 	return err
-	// }
-	// v, err = vcore.StartInstance("json", configBytes)
 	v, err = startInstance(profile, nil)
 	if err != nil {
 		log.Fatalf("start V instance failed: %v", err)
@@ -681,7 +676,7 @@ func TestConfig(configFileContent string, assetPrefix string) error {
 }
 
 func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	config, err := loadVmessTestConfig(profile)
 	if err != nil {
 		return 0, err
@@ -698,7 +693,7 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 }
 
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	server, err := vcore.StartInstance("json", configBytes)
 	if err != nil {
 		return 0, err
