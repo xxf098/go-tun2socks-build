@@ -20,9 +20,9 @@ import (
 	vbytespool "v2ray.com/core/common/bytespool"
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
-	v2filesystem "v2ray.com/core/common/platform/filesystem"
+	vfilesystem "v2ray.com/core/common/platform/filesystem"
 	vconf "v2ray.com/core/infra/conf"
-	v2serial "v2ray.com/core/infra/conf/serial"
+	vserial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
@@ -657,7 +657,7 @@ func initV2Env(assetPrefix string) {
 	//We need to set location outside V2Ray
 	os.Setenv(v2Asset, assetPrefix)
 	//Now we handle read
-	v2filesystem.NewFileReader = func(path string) (io.ReadCloser, error) {
+	vfilesystem.NewFileReader = func(path string) (io.ReadCloser, error) {
 		if strings.HasPrefix(path, assetPrefix) {
 			p := path[len(assetPrefix)+1:]
 			//is it overridden?
@@ -674,7 +674,7 @@ func initV2Env(assetPrefix string) {
 func TestConfig(configFileContent string, assetPrefix string) error {
 	initV2Env(assetPrefix)
 	// os.Setenv("v2ray.location.asset", assetPrefix)
-	_, err := v2serial.LoadJSONConfig(strings.NewReader(configFileContent))
+	_, err := vserial.LoadJSONConfig(strings.NewReader(configFileContent))
 	return err
 }
 
