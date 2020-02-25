@@ -634,16 +634,18 @@ func CopyAssets(assetDir string, force bool) error {
 			if err != nil {
 				return err
 			}
+			defer src.Close()
+
 			dst, err := os.OpenFile(assetDir+dat, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if err != nil {
 				return err
 			}
+			defer dst.Close()
+
 			_, err = io.Copy(dst, src)
 			if err != nil {
 				return err
 			}
-			src.Close()
-			dst.Close()
 		}
 	}
 	return nil
