@@ -76,10 +76,6 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 	}
 }
 
-// type DBService interface {
-// 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
-// }
-
 // TODO: try with native struct config vconf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
@@ -172,7 +168,6 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 			},
 		},
 	}
-	// errStr, _ := json.Marshal(vmessConfig)
 	return json.MarshalIndent(vmessConfig, "", "    ")
 }
 
@@ -446,9 +441,6 @@ func StartV2Ray(
 	if packetFlow == nil {
 		return errors.New("packetFlow is null")
 	}
-	// if dbService != nil {
-	// 	vsession.DefaultDBService = dbService
-	// }
 
 	if lwipStack == nil {
 		// Setup the lwIP stack.
@@ -456,7 +448,7 @@ func StartV2Ray(
 	}
 
 	// Assets
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	// log
 	registerLogService(logService)
 
@@ -492,9 +484,6 @@ func StartV2Ray(
 	ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
 
 	// Register tun2socks connection handlers.
-	// vhandler := v2ray.NewHandler(ctx, v)
-	// core.RegisterTCPConnectionHandler(vhandler)
-	// core.RegisterUDPConnectionHandler(vhandler)
 	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
@@ -532,17 +521,13 @@ func StartV2RayWithVmess(
 		return errors.New("packetFlow is null")
 	}
 
-	// if dbService != nil {
-	// 	vsession.DefaultDBService = dbService
-	// }
-
 	if lwipStack == nil {
 		// Setup the lwIP stack.
 		lwipStack = core.NewLWIPStack()
 	}
 
 	// Assets
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	// logger
 	registerLogService(logService)
 	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
@@ -602,7 +587,6 @@ func StopV2Ray() {
 	}
 	v.Close()
 	v = nil
-	// vsession.DefaultDBService = nil
 }
 
 func init() {
@@ -657,11 +641,6 @@ func initV2Env(assetPrefix string) {
 	vfilesystem.NewFileReader = func(path string) (io.ReadCloser, error) {
 		if strings.HasPrefix(path, assetPrefix) {
 			p := path[len(assetPrefix)+1:]
-			//is it overridden?
-			//by, ok := overridedAssets[p]
-			//if ok {
-			//	return os.Open(by)
-			//}
 			return mobasset.Open(p)
 		}
 		return os.Open(path)
@@ -670,7 +649,6 @@ func initV2Env(assetPrefix string) {
 
 func TestConfig(configFileContent string, assetPrefix string) error {
 	initV2Env(assetPrefix)
-	// os.Setenv("v2ray.location.asset", assetPrefix)
 	_, err := vserial.LoadJSONConfig(strings.NewReader(configFileContent))
 	return err
 }
@@ -688,7 +666,6 @@ func TestVmessLatency(profile *Vmess, assetPath string) (int64, error) {
 	defer server.Close()
 	runtime.GC()
 	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", testProxyPort)
-	// socksProxy, err := addInboundHandler(server)
 	return testLatency(socksProxy)
 }
 
