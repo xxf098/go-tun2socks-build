@@ -443,72 +443,72 @@ func StartV2Ray(
 	logService LogService,
 	configBytes []byte,
 	assetPath string) error {
-	if packetFlow != nil {
-		// if dbService != nil {
-		// 	vsession.DefaultDBService = dbService
-		// }
-
-		if lwipStack == nil {
-			// Setup the lwIP stack.
-			lwipStack = core.NewLWIPStack()
-		}
-
-		// Assets
-		os.Setenv("v2ray.location.asset", assetPath)
-		// log
-		registerLogService(logService)
-
-		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
-		protectFd := func(s VpnService, fd int) error {
-			if s.Protect(fd) {
-				return nil
-			} else {
-				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
-			}
-		}
-		netCtlr := func(network, address string, fd uintptr) error {
-			return protectFd(vpnService, int(fd))
-		}
-		vinternet.RegisterDialerController(netCtlr)
-		vinternet.RegisterListenerController(netCtlr)
-
-		// Share the buffer pool.
-		core.SetBufferPool(vbytespool.GetPool(core.BufSize))
-
-		// Start the V2Ray instance.
-		v, err = vcore.StartInstance("json", configBytes)
-		if err != nil {
-			log.Fatalf("start V instance failed: %v", err)
-			return err
-		}
-
-		// Configure sniffing settings for traffic coming from tun2socks.
-		sniffingConfig := &vproxyman.SniffingConfig{
-			Enabled:             true,
-			DestinationOverride: strings.Split("tls,http", ","),
-		}
-		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
-
-		// Register tun2socks connection handlers.
-		// vhandler := v2ray.NewHandler(ctx, v)
-		// core.RegisterTCPConnectionHandler(vhandler)
-		// core.RegisterUDPConnectionHandler(vhandler)
-		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
-		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
-
-		// Write IP packets back to TUN.
-		core.RegisterOutputFn(func(data []byte) (int, error) {
-			if !isStopped {
-				packetFlow.WritePacket(data)
-			}
-			return len(data), nil
-		})
-
-		isStopped = false
-		logService.WriteLog("V2Ray started!")
-		return nil
+	if packetFlow == nil {
+		return errors.New("packetFlow is null")
 	}
-	return errors.New("packetFlow is null")
+	// if dbService != nil {
+	// 	vsession.DefaultDBService = dbService
+	// }
+
+	if lwipStack == nil {
+		// Setup the lwIP stack.
+		lwipStack = core.NewLWIPStack()
+	}
+
+	// Assets
+	os.Setenv("v2ray.location.asset", assetPath)
+	// log
+	registerLogService(logService)
+
+	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+	protectFd := func(s VpnService, fd int) error {
+		if s.Protect(fd) {
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+		}
+	}
+	netCtlr := func(network, address string, fd uintptr) error {
+		return protectFd(vpnService, int(fd))
+	}
+	vinternet.RegisterDialerController(netCtlr)
+	vinternet.RegisterListenerController(netCtlr)
+
+	// Share the buffer pool.
+	core.SetBufferPool(vbytespool.GetPool(core.BufSize))
+
+	// Start the V2Ray instance.
+	v, err = vcore.StartInstance("json", configBytes)
+	if err != nil {
+		log.Fatalf("start V instance failed: %v", err)
+		return err
+	}
+
+	// Configure sniffing settings for traffic coming from tun2socks.
+	sniffingConfig := &vproxyman.SniffingConfig{
+		Enabled:             true,
+		DestinationOverride: strings.Split("tls,http", ","),
+	}
+	ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
+
+	// Register tun2socks connection handlers.
+	// vhandler := v2ray.NewHandler(ctx, v)
+	// core.RegisterTCPConnectionHandler(vhandler)
+	// core.RegisterUDPConnectionHandler(vhandler)
+	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
+	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+
+	// Write IP packets back to TUN.
+	core.RegisterOutputFn(func(data []byte) (int, error) {
+		if !isStopped {
+			packetFlow.WritePacket(data)
+		}
+		return len(data), nil
+	})
+
+	isStopped = false
+	logService.WriteLog("V2Ray started!")
+	return nil
 }
 
 func GenerateVmessString(profile *Vmess) (string, error) {
@@ -528,73 +528,74 @@ func StartV2RayWithVmess(
 	logService LogService,
 	profile *Vmess,
 	assetPath string) error {
-	if packetFlow != nil {
-		// if dbService != nil {
-		// 	vsession.DefaultDBService = dbService
-		// }
-
-		if lwipStack == nil {
-			// Setup the lwIP stack.
-			lwipStack = core.NewLWIPStack()
-		}
-
-		// Assets
-		os.Setenv("v2ray.location.asset", assetPath)
-		// logger
-		registerLogService(logService)
-		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
-		protectFd := func(s VpnService, fd int) error {
-			if s.Protect(fd) {
-				return nil
-			} else {
-				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
-			}
-		}
-		netCtlr := func(network, address string, fd uintptr) error {
-			return protectFd(vpnService, int(fd))
-		}
-		vinternet.RegisterDialerController(netCtlr)
-		vinternet.RegisterListenerController(netCtlr)
-
-		// Share the buffer pool.
-		core.SetBufferPool(vbytespool.GetPool(core.BufSize))
-
-		// Start the V2Ray instance.
-		// configBytes, err := generateVmessConfig(profile)
-		// if err != nil {
-		// 	return err
-		// }
-		// v, err = vcore.StartInstance("json", configBytes)
-		v, err = startInstance(profile, nil)
-		if err != nil {
-			log.Fatalf("start V instance failed: %v", err)
-			return err
-		}
-
-		// Configure sniffing settings for traffic coming from tun2socks.
-		sniffingConfig := &vproxyman.SniffingConfig{
-			Enabled:             true,
-			DestinationOverride: strings.Split("tls,http", ","),
-		}
-		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
-
-		// Register tun2socks connection handlers.
-		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
-		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
-
-		// Write IP packets back to TUN.
-		core.RegisterOutputFn(func(data []byte) (int, error) {
-			if !isStopped {
-				packetFlow.WritePacket(data)
-			}
-			return len(data), nil
-		})
-
-		isStopped = false
-		logService.WriteLog("V2Ray Started!")
-		return nil
+	if packetFlow == nil {
+		return errors.New("packetFlow is null")
 	}
-	return errors.New("packetFlow is null")
+
+	// if dbService != nil {
+	// 	vsession.DefaultDBService = dbService
+	// }
+
+	if lwipStack == nil {
+		// Setup the lwIP stack.
+		lwipStack = core.NewLWIPStack()
+	}
+
+	// Assets
+	os.Setenv("v2ray.location.asset", assetPath)
+	// logger
+	registerLogService(logService)
+	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+	protectFd := func(s VpnService, fd int) error {
+		if s.Protect(fd) {
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+		}
+	}
+	netCtlr := func(network, address string, fd uintptr) error {
+		return protectFd(vpnService, int(fd))
+	}
+	vinternet.RegisterDialerController(netCtlr)
+	vinternet.RegisterListenerController(netCtlr)
+
+	// Share the buffer pool.
+	core.SetBufferPool(vbytespool.GetPool(core.BufSize))
+
+	// Start the V2Ray instance.
+	// configBytes, err := generateVmessConfig(profile)
+	// if err != nil {
+	// 	return err
+	// }
+	// v, err = vcore.StartInstance("json", configBytes)
+	v, err = startInstance(profile, nil)
+	if err != nil {
+		log.Fatalf("start V instance failed: %v", err)
+		return err
+	}
+
+	// Configure sniffing settings for traffic coming from tun2socks.
+	sniffingConfig := &vproxyman.SniffingConfig{
+		Enabled:             true,
+		DestinationOverride: strings.Split("tls,http", ","),
+	}
+	ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
+
+	// Register tun2socks connection handlers.
+	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
+	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+
+	// Write IP packets back to TUN.
+	core.RegisterOutputFn(func(data []byte) (int, error) {
+		if !isStopped {
+			packetFlow.WritePacket(data)
+		}
+		return len(data), nil
+	})
+
+	isStopped = false
+	logService.WriteLog("V2Ray Started!")
+	return nil
 }
 
 // StopV2Ray stop v2ray
