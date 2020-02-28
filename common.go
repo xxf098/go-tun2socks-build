@@ -101,9 +101,9 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 				Users: []v2ray.Users{
 					v2ray.Users{
 						AlterID:  profile.Aid,
-						Email:    "v2ray@email.com",
+						Email:    "xxf098@github.com",
 						ID:       profile.ID,
-						Security: "auto",
+						Security: profile.Security,
 					},
 				},
 			},
@@ -117,6 +117,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		Settings:      &outboundsSettingsMsg1,
 		StreamSetting: &conf.StreamConfig{},
 	}
+	// TODO: type = "http"
 	if profile.Net == "ws" {
 		transportProtocol := conf.TransportProtocol(profile.Net)
 		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
