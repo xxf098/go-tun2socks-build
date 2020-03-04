@@ -30,8 +30,9 @@ var BlockHosts = map[string]*conf.Address{
 	// "domain:umsns.com":    localhost,
 	// "domain:qhupdate.com": localhost,
 	// "domain:qhimg.com":    localhost,
-	"at3.doubanio.com": localhost,
-	"p.pinduoduo.com":  localhost,
+	"at3.doubanio.com":     localhost,
+	"p.pinduoduo.com":      localhost,
+	"domain:googleapis.cn": &conf.Address{vnet.DomainAddress("googleapis.com")},
 }
 
 // no prefix is substr

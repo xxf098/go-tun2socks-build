@@ -188,6 +188,25 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	jsonConfig.DNSConfig = createDNSConfig()
 	// update rules
 	jsonConfig.RouterConfig = createRouterConfig()
+	// policy
+	// connectionIdle := uint32(300)
+	// downlinkOnly := uint32(1)
+	// handshake := uint32(4)
+	// uplinkOnly := uint32(1)
+	// jsonConfig.Policy = &conf.PolicyConfig{
+	// 	Levels: map[uint32]*conf.Policy{
+	// 		8: &conf.Policy{
+	// 			ConnectionIdle: &connectionIdle,
+	// 			DownlinkOnly:   &downlinkOnly,
+	// 			Handshake:      &handshake,
+	// 			UplinkOnly:     &uplinkOnly,
+	// 		},
+	// 	},
+	// 	System: &conf.SystemPolicy{
+	// 		StatsInboundDownlink: true,
+	// 		StatsInboundUplink:   true,
+	// 	},
+	// }
 	// inboundsSettings, _ := json.Marshal(v2ray.InboundsSettings{
 	// 	Auth: "noauth",
 	// 	IP:   "127.0.0.1",

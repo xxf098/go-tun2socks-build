@@ -222,25 +222,35 @@ func createRouterConfig() *conf.RouterConfig {
 		OutboundTag: "blocked",
 		Domain:      v2ray.BlockDomains,
 	})
+	rule4, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "proxy",
+		Domain:      []string{"domain:googleapis.cn"},
+	})
 	return &conf.RouterConfig{
 		DomainStrategy: &domainStrategy,
-		RuleList:       []json.RawMessage{json.RawMessage(rule1), json.RawMessage(rule2), json.RawMessage(rule3)},
+		RuleList: []json.RawMessage{
+			json.RawMessage(rule4),
+			json.RawMessage(rule1),
+			json.RawMessage(rule2),
+			json.RawMessage(rule3),
+		},
 	}
 }
 
 func createDNSConfig() *conf.DnsConfig {
 	return &conf.DnsConfig{
+		Hosts: v2ray.BlockHosts,
 		Servers: []*conf.NameServerConfig{
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
 			&conf.NameServerConfig{
 				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
 				// Domains: []string{"geosite:cn"},
 			},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
+			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
 		},
-		Hosts: v2ray.BlockHosts,
 	}
 }
