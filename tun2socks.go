@@ -47,33 +47,35 @@ func newError(values ...interface{}) *verrors.Error {
 
 // constructor export New
 type Vmess struct {
-	Host     string
-	Path     string
-	TLS      string
-	Add      string
-	Port     int
-	Aid      int
-	Net      string
-	ID       string
-	Type     string // headerType
-	Security string // vnext.Security
-	Loglevel string
+	Host      string
+	Path      string
+	TLS       string
+	Add       string
+	Port      int
+	Aid       int
+	Net       string
+	ID        string
+	Type      string // headerType
+	Security  string // vnext.Security
+	RouteMode int    // for SSRRAY
+	Loglevel  string
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, Loglevel string) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, Loglevel string) *Vmess {
 	return &Vmess{
-		Host:     Host,
-		Path:     Path,
-		TLS:      TLS,
-		Add:      Add,
-		Port:     Port,
-		Aid:      Aid,
-		Net:      Net,
-		ID:       ID,
-		Type:     Type,
-		Security: Security,
-		Loglevel: Loglevel,
+		Host:      Host,
+		Path:      Path,
+		TLS:       TLS,
+		Add:       Add,
+		Port:      Port,
+		Aid:       Aid,
+		Net:       Net,
+		ID:        ID,
+		Type:      Type,
+		Security:  Security,
+		RouteMode: RouteMode,
+		Loglevel:  Loglevel,
 	}
 }
 
