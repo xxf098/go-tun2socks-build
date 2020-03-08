@@ -205,36 +205,118 @@ func createFreedomOutboundDetourConfig() conf.OutboundDetourConfig {
 	}
 }
 
-func createRouterConfig() *conf.RouterConfig {
+// 0 all
+// 1 bypass LAN
+// 2 bypass China
+// 3 bypass LAN & China
+// 4 GFWList
+// 5 ChinaList
+// >= 6 bypass LAN & China & AD block
+// https://github.com/Loyalsoldier/v2ray-rules-dat
+func createRouterConfig(routeMode int) *conf.RouterConfig {
 	domainStrategy := "IPIfNonMatch"
-	rule1, _ := json.Marshal(v2ray.Rules{
+	bypassLAN, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "direct",
-		IP:          []string{"geoip:private", "geoip:cn"},
+		IP:          []string{"geoip:private"},
 	})
-	rule2, _ := json.Marshal(v2ray.Rules{
+	bypassChinaIP, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "direct",
+		IP:          []string{"geoip:cn"},
+	})
+	bypassChinaSite, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "direct",
 		Domain:      []string{"geosite:cn"},
 	})
-	rule3, _ := json.Marshal(v2ray.Rules{
+	blockDomain, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "blocked",
 		Domain:      v2ray.BlockDomains,
 	})
-	rule4, _ := json.Marshal(v2ray.Rules{
+	// blockAd, _ := json.Marshal(v2ray.Rules{
+	// 	Type:        "field",
+	// 	OutboundTag: "blocked",
+	// 	Domain:      []string{"geosite:category-ads-all"},
+	// })
+	gfwList, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "proxy",
+		Domain:      []string{"geosite:geolocation-!cn"},
+	})
+	chinaListSite, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "proxy",
+		Domain:      []string{"geosite:cn"},
+	})
+	chinaListIP, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "proxy",
+		IP:          []string{"geoip:cn"},
+	})
+	googleAPI, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "proxy",
 		Domain:      []string{"domain:googleapis.cn"},
 	})
+	// all
+	rules := []json.RawMessage{}
+	if routeMode == 1 {
+		rules = []json.RawMessage{
+			json.RawMessage(bypassLAN),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+		}
+	}
+	if routeMode == 2 {
+		rules = []json.RawMessage{
+			json.RawMessage(bypassChinaIP),
+			json.RawMessage(bypassChinaSite),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+		}
+	}
+	if routeMode == 3 {
+		rules = []json.RawMessage{
+			json.RawMessage(bypassLAN),
+			json.RawMessage(bypassChinaIP),
+			json.RawMessage(bypassChinaSite),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+		}
+	}
+	if routeMode == 4 {
+		rules = []json.RawMessage{
+			json.RawMessage(bypassLAN),
+			json.RawMessage(bypassChinaIP),
+			json.RawMessage(bypassChinaSite),
+			json.RawMessage(gfwList),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+		}
+	}
+	if routeMode == 5 {
+		rules = []json.RawMessage{
+			json.RawMessage(chinaListIP),
+			json.RawMessage(chinaListSite),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+		}
+	}
+	if routeMode >= 5 {
+		rules = []json.RawMessage{
+			json.RawMessage(bypassLAN),
+			json.RawMessage(bypassChinaIP),
+			json.RawMessage(bypassChinaSite),
+			json.RawMessage(blockDomain),
+			json.RawMessage(googleAPI),
+			// json.RawMessage(blockAd),
+		}
+	}
 	return &conf.RouterConfig{
 		DomainStrategy: &domainStrategy,
-		RuleList: []json.RawMessage{
-			json.RawMessage(rule4),
-			json.RawMessage(rule1),
-			json.RawMessage(rule2),
-			json.RawMessage(rule3),
-		},
+		RuleList:       rules,
 	}
 }
 
@@ -243,11 +325,11 @@ func createDNSConfig() *conf.DnsConfig {
 		Hosts: v2ray.BlockHosts,
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
-				Port:    53,
-				// Domains: []string{"geosite:cn"},
-			},
+			// &conf.NameServerConfig{
+			// 	Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+			// 	Port:    53,
+			// 	Domains: []string{"geosite:cn"},
+			// },
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},

@@ -189,7 +189,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
 	jsonConfig.DNSConfig = createDNSConfig()
 	// update rules
-	jsonConfig.RouterConfig = createRouterConfig()
+	jsonConfig.RouterConfig = createRouterConfig(profile.RouteMode)
 	// policy
 	// connectionIdle := uint32(300)
 	// downlinkOnly := uint32(1)
