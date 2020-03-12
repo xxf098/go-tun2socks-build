@@ -273,8 +273,8 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
-			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
+			json.RawMessage(bypassChinaIP),
 		}
 	}
 	if routeMode == 3 {
@@ -282,8 +282,8 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
 			json.RawMessage(bypassLAN),
-			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
+			json.RawMessage(bypassChinaIP),
 		}
 	}
 	if routeMode == 4 {
@@ -292,24 +292,24 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(blockDomain),
 			json.RawMessage(gfwList),
 			json.RawMessage(bypassLAN),
-			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
+			json.RawMessage(bypassChinaIP),
 		}
 	}
 	if routeMode == 5 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
-			json.RawMessage(chinaListIP),
 			json.RawMessage(chinaListSite),
+			json.RawMessage(chinaListIP),
 		}
 	}
 	if routeMode >= 5 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
 			json.RawMessage(bypassLAN),
-			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
+			json.RawMessage(bypassChinaIP),
 			json.RawMessage(blockDomain),
 			// json.RawMessage(blockAd),
 		}
