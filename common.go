@@ -272,36 +272,36 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	if routeMode == 2 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
+			json.RawMessage(blockDomain),
 			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
-			json.RawMessage(blockDomain),
 		}
 	}
 	if routeMode == 3 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
+			json.RawMessage(blockDomain),
 			json.RawMessage(bypassLAN),
 			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
-			json.RawMessage(blockDomain),
 		}
 	}
 	if routeMode == 4 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
+			json.RawMessage(blockDomain),
 			json.RawMessage(gfwList),
 			json.RawMessage(bypassLAN),
 			json.RawMessage(bypassChinaIP),
 			json.RawMessage(bypassChinaSite),
-			json.RawMessage(blockDomain),
 		}
 	}
 	if routeMode == 5 {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
+			json.RawMessage(blockDomain),
 			json.RawMessage(chinaListIP),
 			json.RawMessage(chinaListSite),
-			json.RawMessage(blockDomain),
 		}
 	}
 	if routeMode >= 5 {
@@ -320,16 +320,17 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	}
 }
 
+// remove https://github.com/v2ray/v2ray-core/blob/02b658cd2beb5968818c7ed37388fb348b9b9cb9/app/dns/server.go#L362
 func createDNSConfig() *conf.DnsConfig {
 	return &conf.DnsConfig{
 		Hosts: v2ray.BlockHosts,
 		Servers: []*conf.NameServerConfig{
+			&conf.NameServerConfig{
+				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+				Port:    53,
+				// Domains: []string{"geosite:cn"},
+			},
 			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			// &conf.NameServerConfig{
-			// 	Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
-			// 	Port:    53,
-			// 	Domains: []string{"geosite:cn"},
-			// },
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
 			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
