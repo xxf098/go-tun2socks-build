@@ -18,7 +18,7 @@ import (
 
 const (
 	testProxyPort = 8899
-	testUrl       = "https://www.google.com/generate_204"
+	testUrl       = "http://www.gstatic.com/generate_204"
 )
 
 func testLatency(proxy string) (int64, error) {
