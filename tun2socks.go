@@ -237,6 +237,8 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		vmessOutboundDetourConfig,
 		freedomOutboundDetourConfig,
 	}
+	// stats
+	jsonConfig.Stats = &conf.StatsConfig{}
 	return jsonConfig, nil
 }
 
