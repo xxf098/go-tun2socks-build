@@ -233,9 +233,17 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
 	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig()
 	// order matters
-	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
-		vmessOutboundDetourConfig,
-		freedomOutboundDetourConfig,
+	// GFWList mode, use 'direct' as default
+	if profile.RouteMode == 4 {
+		jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+			freedomOutboundDetourConfig,
+			vmessOutboundDetourConfig,
+		}
+	} else {
+		jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
+			vmessOutboundDetourConfig,
+			freedomOutboundDetourConfig,
+		}
 	}
 	// stats
 	jsonConfig.Stats = &conf.StatsConfig{}

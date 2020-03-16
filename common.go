@@ -291,9 +291,6 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
 			json.RawMessage(gfwList),
-			json.RawMessage(bypassLAN),
-			json.RawMessage(bypassChinaSite),
-			json.RawMessage(bypassChinaIP),
 		}
 	}
 	if routeMode == 5 {
