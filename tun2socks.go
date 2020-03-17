@@ -21,6 +21,7 @@ import (
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
 	v2filesystem "v2ray.com/core/common/platform/filesystem"
+	v2stats "v2ray.com/core/features/stats"
 	"v2ray.com/core/infra/conf"
 	v2serial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
@@ -33,6 +34,7 @@ var localDNS = "223.5.5.5:53"
 var err error
 var lwipStack core.LWIPStack
 var v *vcore.Instance
+var statsManager v2stats.Manager
 var isStopped = false
 
 const (
@@ -406,6 +408,7 @@ func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 		createVmessOutboundDetourConfig(profile),
 	}
+	jsonConfig.Stats = &conf.StatsConfig{}
 	return jsonConfig, nil
 }
 
@@ -428,6 +431,7 @@ func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error)
 	if err := instance.Start(); err != nil {
 		return nil, err
 	}
+	statsManager = instance.GetFeature(v2stats.ManagerType()).(v2stats.Manager)
 	return instance, nil
 }
 
@@ -636,10 +640,42 @@ func StopV2Ray() {
 		lwipStack.Close()
 		lwipStack = nil
 	}
+	if statsManager != nil {
+		statsManager.Close()
+		statsManager = nil
+	}
 	v.Close()
 	v = nil
 	// vsession.DefaultDBService = nil
 }
+
+// ~/go/src/v2ray.com/core/proxy/vmess/outbound/outbound.go
+func QueryStats(direct string) int64 {
+	if statsManager == nil {
+		return 0
+	}
+	name := "vmess>>>" + "ssrray" + ">>>traffic>>>" + direct
+	counter := statsManager.GetCounter(name)
+	if counter == nil {
+		return 0
+	}
+	return counter.Set(0)
+}
+
+// func queryStatsBg(log LogService) {
+// 	for {
+// 		if statsManager == nil {
+// 			log.WriteLog("statsManager nil")
+// 			return
+// 		}
+// 		name := "vmess>>>" + "ssrray" + ">>>traffic>>>" + "down"
+// 		counter := statsManager.GetCounter(name)
+// 		if counter == nil {
+// 			log.WriteLog("counter nil")
+// 		}
+// 		time.Sleep(500 * time.Millisecond)
+// 	}
+// }
 
 func init() {
 	net.DefaultResolver = &net.Resolver{
