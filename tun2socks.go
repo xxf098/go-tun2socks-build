@@ -389,7 +389,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 // 	return &vcoreconfig, nil
 // }
 
-func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
+func loadVmessTestConfig(profile *Vmess, port int) (*conf.Config, error) {
 	jsonConfig := &conf.Config{}
 	jsonConfig.LogConfig = &conf.LogConfig{
 		LogLevel: profile.Loglevel,
@@ -403,7 +403,7 @@ func loadVmessTestConfig(profile *Vmess) (*conf.Config, error) {
 		},
 	}
 	jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
-		createInboundDetourConfig(testProxyPort),
+		createInboundDetourConfig(port),
 	}
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 		createVmessOutboundDetourConfig(profile),
@@ -747,7 +747,11 @@ func TestConfig(ConfigureFileContent string, assetperfix string) error {
 
 func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error) {
 	os.Setenv("v2ray.location.asset", assetPath)
-	config, err := loadVmessTestConfig(profile)
+	var proxyPort = testProxyPort
+	if port > 0 && port < 65535 {
+		proxyPort = port
+	}
+	config, err := loadVmessTestConfig(profile, proxyPort)
 	if err != nil {
 		return 0, err
 	}
@@ -757,10 +761,6 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	}
 	defer server.Close()
 	runtime.GC()
-	var proxyPort = testProxyPort
-	if port > 0 && port < 65535 {
-		proxyPort = port
-	}
 	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort)
 	// socksProxy, err := addInboundHandler(server)
 	return testLatency(socksProxy)
