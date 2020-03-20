@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	testProxyPort = 8899
+	testProxyPort = uint32(8899)
 	testUrl       = "http://www.gstatic.com/generate_204"
 )
 

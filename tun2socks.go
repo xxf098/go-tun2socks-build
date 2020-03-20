@@ -389,7 +389,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 // 	return &vcoreconfig, nil
 // }
 
-func loadVmessTestConfig(profile *Vmess, port int) (*conf.Config, error) {
+func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 	jsonConfig := &conf.Config{}
 	jsonConfig.LogConfig = &conf.LogConfig{
 		LogLevel: profile.Loglevel,
@@ -749,7 +749,7 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	os.Setenv("v2ray.location.asset", assetPath)
 	var proxyPort = testProxyPort
 	if port > 0 && port < 65535 {
-		proxyPort = port
+		proxyPort = uint32(port)
 	}
 	config, err := loadVmessTestConfig(profile, proxyPort)
 	if err != nil {
