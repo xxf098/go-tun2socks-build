@@ -761,9 +761,10 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	}
 	defer server.Close()
 	runtime.GC()
-	socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort)
+	// socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort)
 	// socksProxy, err := addInboundHandler(server)
-	return testLatency(socksProxy)
+	// return testLatency(socksProxy)
+	return checkServerCredentials("127.0.0.1", proxyPort)
 }
 
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {

@@ -3,7 +3,10 @@ package tun2socks
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,8 +20,15 @@ import (
 )
 
 const (
-	testProxyPort = uint32(8899)
-	testUrl       = "http://www.gstatic.com/generate_204"
+	testProxyPort         = uint32(8899)
+	testUrl               = "http://www.gstatic.com/generate_204"
+	Version5              = 0x05
+	AuthMethodNotRequired = 0x00
+	SocksCmdConnect       = 0x01
+	AddrTypeIPv4          = 0x01
+	AddrTypeFQDN          = 0x03
+	AddrTypeIPv6          = 0x04
+	StatusSucceeded       = 0x00
 )
 
 func testLatency(proxy string) (int64, error) {
@@ -51,6 +61,84 @@ func testLatency(proxy string) (int64, error) {
 		}
 	}
 	return 0, newError(resp.Status)
+}
+
+// https://github.com/golang/net/blob/master/internal/socks/client.go
+// scoks5 test vmess test
+// TODO: error message
+func checkServerCredentials(ip string, port uint32) (int64, error) {
+	addr := fmt.Sprintf("%s:%d", ip, port)
+	conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
+	defer conn.Close()
+	if err != nil {
+		return 0, err
+	}
+	err = conn.SetDeadline(time.Now().Add(2 * time.Second))
+	if err != nil {
+		return 0, err
+	}
+	remoteHost := "www.gstatic.com"
+	remotePort := 80
+	b := make([]byte, 0, 6+len(remoteHost))
+	b = append(b, Version5)
+	b = append(b, 1, byte(AuthMethodNotRequired))
+	if _, err = conn.Write(b); err != nil {
+		return 0, err
+	}
+	if _, err = io.ReadFull(conn, b[:2]); err != nil {
+		return 0, err
+	}
+	if b[0] != Version5 {
+		return 0, errors.New("unexpected protocol version")
+	}
+	b = b[:0]
+	b = append(b, Version5, SocksCmdConnect, 0)
+	b = append(b, AddrTypeFQDN)
+	b = append(b, byte(len(remoteHost)))
+	b = append(b, remoteHost...)
+	b = append(b, byte(remotePort>>8), byte(remotePort))
+	if _, err = conn.Write(b); err != nil {
+		return 0, err
+	}
+	if _, err = io.ReadFull(conn, b[:10]); err != nil {
+		return 0, err
+	}
+	if b[0] != Version5 {
+		return 0, errors.New("unexpected protocol version")
+	}
+	if b[1] != StatusSucceeded {
+		return 0, errors.New("unknown error")
+	}
+	if b[2] != 0 {
+		return 0, errors.New("non-zero reserved field")
+	}
+	if err = send204Request(&conn); err != nil {
+		return 0, err
+	}
+	start := time.Now()
+	if err = send204Request(&conn); err != nil {
+		return 0, err
+	}
+	elapsed := time.Since(start)
+	return elapsed.Milliseconds(), nil
+}
+
+func send204Request(conn *net.Conn) error {
+	remoteHost := "www.gstatic.com"
+	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nCache-Control: max-age=90\r\n\r\n", remoteHost)
+	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
+		return err
+	}
+	buf := make([]byte, 128)
+	n, err := (*conn).Read(buf)
+	if err != nil && err != io.EOF {
+		return err
+	}
+	httpResponse := string(buf[:n])
+	if !strings.HasPrefix(httpResponse, "HTTP/1.1 204 No Content") {
+		return errors.New("error response")
+	}
+	return nil
 }
 
 func addInboundHandler(server *vcore.Instance) (string, error) {
