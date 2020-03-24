@@ -136,7 +136,7 @@ func send204Request(conn *net.Conn) error {
 	}
 	httpResponse := string(buf[:n])
 	if !strings.HasPrefix(httpResponse, "HTTP/1.1 204 No Content") {
-		return errors.New("error response")
+		return fmt.Errorf("error response %s", httpResponse)
 	}
 	return nil
 }
