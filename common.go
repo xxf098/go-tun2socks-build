@@ -112,18 +112,29 @@ func checkServerCredentials(ip string, port uint32) (int64, error) {
 	if b[2] != 0 {
 		return 0, errors.New("non-zero reserved field")
 	}
-	if err = send204Request(&conn); err != nil {
+	start := time.Now()
+	err = send204Request(&conn, 1*time.Second)
+	if err == nil {
+		elapsed := time.Since(start)
+		return elapsed.Milliseconds(), nil
+	}
+	if e, ok := err.(net.Error); !(ok && e.Timeout()) {
 		return 0, err
 	}
-	start := time.Now()
-	if err = send204Request(&conn); err != nil {
+	// timeout then retry
+	start = time.Now()
+	if err = send204Request(&conn, 2*time.Second); err != nil {
 		return 0, err
 	}
 	elapsed := time.Since(start)
 	return elapsed.Milliseconds(), nil
 }
 
-func send204Request(conn *net.Conn) error {
+func send204Request(conn *net.Conn, timeout time.Duration) error {
+	err = (*conn).SetDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return err
+	}
 	remoteHost := "www.gstatic.com"
 	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nCache-Control: max-age=90\r\n\r\n", remoteHost)
 	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
@@ -136,7 +147,7 @@ func send204Request(conn *net.Conn) error {
 	}
 	httpResponse := string(buf[:n])
 	if !strings.HasPrefix(httpResponse, "HTTP/1.1 204 No Content") {
-		return fmt.Errorf("error response %s", httpResponse)
+		return fmt.Errorf("error response: %s", httpResponse)
 	}
 	return nil
 }
