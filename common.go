@@ -112,18 +112,12 @@ func checkServerCredentials(ip string, port uint32) (int64, error) {
 	if b[2] != 0 {
 		return 0, errors.New("non-zero reserved field")
 	}
-	start := time.Now()
-	err = send204Request(&conn, 1*time.Second)
-	if err == nil {
-		elapsed := time.Since(start)
-		return elapsed.Milliseconds(), nil
-	}
-	if e, ok := err.(net.Error); !(ok && e.Timeout()) {
+	if err = send204Request(&conn, 2*time.Second); err != nil {
 		return 0, err
 	}
 	// timeout then retry
-	start = time.Now()
-	if err = send204Request(&conn, 2*time.Second); err != nil {
+	start := time.Now()
+	if err = send204Request(&conn, 1*time.Second); err != nil {
 		return 0, err
 	}
 	elapsed := time.Since(start)
