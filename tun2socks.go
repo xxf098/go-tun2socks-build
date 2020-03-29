@@ -541,7 +541,7 @@ func StartV2Ray(
 		})
 
 		isStopped = false
-		logService.WriteLog("V2Ray started!")
+		logService.WriteLog(fmt.Sprintf("V2Ray %s started!", CheckVersion()))
 		return nil
 	}
 	return errors.New("packetFlow is null")
