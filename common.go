@@ -305,6 +305,7 @@ func createFreedomOutboundDetourConfig() conf.OutboundDetourConfig {
 // 4 GFWList
 // 5 ChinaList
 // >= 6 bypass LAN & China & AD block
+// 	0: "Plain", 1: "Regex", 2: "Domain", 3: "Full",
 // https://github.com/Loyalsoldier/v2ray-rules-dat
 func createRouterConfig(routeMode int) *conf.RouterConfig {
 	domainStrategy := "IPIfNonMatch"
@@ -411,19 +412,22 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 }
 
 // remove https://github.com/v2ray/v2ray-core/blob/02b658cd2beb5968818c7ed37388fb348b9b9cb9/app/dns/server.go#L362
-func createDNSConfig() *conf.DnsConfig {
-	return &conf.DnsConfig{
-		Hosts: v2ray.BlockHosts,
-		Servers: []*conf.NameServerConfig{
-			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
-				Port:    53,
-				// Domains: []string{"geosite:cn"},
-			},
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{8, 8, 8, 8})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})}, Port: 53},
-			// &conf.NameServerConfig{Address: &conf.Address{vnet.DomainAddress("localhost")}, Port: 53},
+func createDNSConfig(routeMode int) *conf.DnsConfig {
+	nameServerConfig := []*conf.NameServerConfig{
+		&conf.NameServerConfig{
+			Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+			Port:    53,
+			// Domains: []string{"geosite:cn"},
 		},
+		&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+	}
+	if routeMode == 2 || routeMode == 3 || routeMode == 4 {
+		nameServerConfig = []*conf.NameServerConfig{
+			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+		}
+	}
+	return &conf.DnsConfig{
+		Hosts:   v2ray.BlockHosts,
+		Servers: nameServerConfig,
 	}
 }
