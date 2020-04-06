@@ -210,7 +210,6 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		Settings:      &outboundsSettingsMsg1,
 		StreamSetting: &conf.StreamConfig{},
 	}
-	// TODO: type = "http"
 	if profile.Net == "ws" {
 		transportProtocol := conf.TransportProtocol(profile.Net)
 		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
@@ -274,6 +273,34 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		if profile.Type != "" {
 			header, _ := json.Marshal(v2ray.KCPSettingsHeader{Type: profile.Type})
 			vmessOutboundDetourConfig.StreamSetting.KCPSettings.HeaderConfig = json.RawMessage(header)
+		}
+	}
+
+	// tcp带http伪装
+	if profile.Net == "tcp" && profile.Type == "http" {
+		transportProtocol := conf.TransportProtocol(profile.Net)
+		tcpSettingsHeader := v2ray.TCPSettingsHeader{
+			Type: profile.Type,
+			TCPSettingsRequest: v2ray.TCPSettingsRequest{
+				Version: "1.1",
+				Method:  "GET",
+				Path:    []string{profile.Path}, // TODO: split by ","
+				Headers: v2ray.HTTPHeaders{
+					UserAgent:      []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36"},
+					AcceptEncoding: []string{"gzip, deflate"},
+					Connection:     "keep-alive",
+					Pragma:         "no-cache",
+					Host:           []string{profile.Host}, // TODO: split by ","
+				},
+			},
+		}
+		header, _ := json.Marshal(tcpSettingsHeader)
+		vmessOutboundDetourConfig.StreamSetting = &conf.StreamConfig{
+			Network:  &transportProtocol,
+			Security: profile.TLS,
+			TCPSettings: &conf.TCPConfig{
+				HeaderConfig: json.RawMessage(header),
+			},
 		}
 	}
 
