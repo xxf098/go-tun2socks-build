@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -31,14 +30,15 @@ const (
 	StatusSucceeded       = 0x00
 )
 
-func testLatency(proxy string) (int64, error) {
-	socksProxyURL, err := url.Parse(proxy)
-	if err != nil {
-		return 0, err
-	}
-	socksTransport := &http.Transport{Proxy: http.ProxyURL(socksProxyURL)}
-	client := &http.Client{Transport: socksTransport, Timeout: time.Second * 3}
-	resp, err := client.Get(testUrl)
+func testLatency(url string) (int64, error) {
+	// socksProxyURL, err := url.Parse(proxy)
+	// if err != nil {
+	// 	return 0, err
+	// }
+	// socksTransport := &http.Transport{Proxy: http.ProxyURL(socksProxyURL)}
+	// client := &http.Client{Transport: socksTransport, Timeout: time.Second * 3}
+	client := &http.Client{Timeout: time.Second * 3}
+	resp, err := client.Get(url)
 	if err != nil {
 		return 0, err
 	}
@@ -48,18 +48,18 @@ func testLatency(proxy string) (int64, error) {
 	}
 	// fmt.Println(resp.Status)
 	// fmt.Println(resp.StatusCode)
-	if resp.StatusCode == 204 {
-		start := time.Now()
-		resp1, err := client.Get(testUrl)
-		elapsed := time.Since(start)
-		if err != nil {
-			return 0, err
-		}
-		defer resp1.Body.Close()
-		if resp1.StatusCode == 204 {
-			return elapsed.Milliseconds(), nil
-		}
+	// if resp.StatusCode == 204 {
+	start := time.Now()
+	resp1, err := client.Get(url)
+	elapsed := time.Since(start)
+	if err != nil {
+		return 0, err
 	}
+	defer resp1.Body.Close()
+	if resp1.StatusCode == 204 || resp1.StatusCode == 200 {
+		return elapsed.Milliseconds(), nil
+	}
+	// }
 	return 0, newError(resp.Status)
 }
 

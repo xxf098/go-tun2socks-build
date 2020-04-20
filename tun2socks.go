@@ -767,6 +767,10 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	return checkServerCredentials("127.0.0.1", proxyPort)
 }
 
+func TestURLLatency(url string) (int64, error) {
+	return testLatency(url)
+}
+
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
 	os.Setenv("v2ray.location.asset", assetPath)
 	server, err := vcore.StartInstance("json", configBytes)
