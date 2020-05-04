@@ -60,11 +60,12 @@ type Vmess struct {
 	Type      string // headerType
 	Security  string // vnext.Security
 	RouteMode int    // for SSRRAY
+	DNS       string // DNS Config
 	Loglevel  string
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, Loglevel string) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, Loglevel string) *Vmess {
 	return &Vmess{
 		Host:      Host,
 		Path:      Path,
@@ -77,6 +78,7 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		Type:      Type,
 		Security:  Security,
 		RouteMode: RouteMode,
+		DNS:       DNS,
 		Loglevel:  Loglevel,
 	}
 }
@@ -189,7 +191,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 		LogLevel: profile.Loglevel,
 	}
 	// https://github.com/Loyalsoldier/v2ray-rules-dat
-	jsonConfig.DNSConfig = createDNSConfig(profile.RouteMode)
+	jsonConfig.DNSConfig = createDNSConfig(profile.RouteMode, profile.DNS)
 	// update rules
 	jsonConfig.RouterConfig = createRouterConfig(profile.RouteMode)
 	// policy

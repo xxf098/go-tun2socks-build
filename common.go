@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -439,18 +440,34 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 }
 
 // remove https://github.com/v2ray/v2ray-core/blob/02b658cd2beb5968818c7ed37388fb348b9b9cb9/app/dns/server.go#L362
-func createDNSConfig(routeMode int) *conf.DnsConfig {
-	nameServerConfig := []*conf.NameServerConfig{
-		&conf.NameServerConfig{
-			Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
-			Port:    53,
-			// Domains: []string{"geosite:cn"},
-		},
-		&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
-	}
+func createDNSConfig(routeMode int, dnsConf string) *conf.DnsConfig {
+	// nameServerConfig := []*conf.NameServerConfig{
+	// 	&conf.NameServerConfig{
+	// 		Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+	// 		Port:    53,
+	// 		// Domains: []string{"geosite:cn"},
+	// 	},
+	// 	&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+	// }
+	// if routeMode == 2 || routeMode == 3 || routeMode == 4 {
+	// 	nameServerConfig = []*conf.NameServerConfig{
+	// 		&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+	// 	}
+	// }
+	dns := strings.Split(dnsConf, ",")
+	nameServerConfig := []*conf.NameServerConfig{}
 	if routeMode == 2 || routeMode == 3 || routeMode == 4 {
+		split := strings.Split(dns[0], ":")
+		port, _ := strconv.Atoi(split[1])
 		nameServerConfig = []*conf.NameServerConfig{
-			&conf.NameServerConfig{Address: &conf.Address{vnet.IPAddress([]byte{1, 1, 1, 1})}, Port: 53},
+			&conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(split[0])}, Port: uint16(port)},
+		}
+	} else {
+		for i := len(dns) - 1; i >= 0; i-- {
+			split := strings.Split(dns[0], ":")
+			port, _ := strconv.Atoi(split[1])
+			newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(split[0])}, Port: uint16(port)}
+			nameServerConfig = append(nameServerConfig, newConfig)
 		}
 	}
 	return &conf.DnsConfig{
