@@ -48,5 +48,5 @@ jobs:
         go version
         java -version
         ls "$ANDROID_HOME"
-        ls "ANDROID_NDK_HOME"
+        ls "$ANDROID_NDK_HOME"
         ls ./build
