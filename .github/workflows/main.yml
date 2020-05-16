@@ -36,7 +36,7 @@ jobs:
           ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}           
     - name: Setup Android
       run: |
-        wget "https://raw.githubusercontent.com/xxf098/shadowsocksr-v2ray-android/e11d00241361ee400f1a9f77df3d8d3f975c9652/travis-ci/setup.sh" -O setup.sh
+        wget "https://raw.githubusercontent.com/xxf098/shadowsocksr-v2ray-android/efbb4f034ac95eec2affc38f97681a23ec4a42e6/travis-ci/setup.sh" -O setup.sh
         sed -i 's/r12b/r20b/g' setup.sh && chmod +x setup.sh
         ./setup.sh
     - name: Check Build
