@@ -24,10 +24,21 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Setup NDK
+    - name: Cache Data
+      uses: actions/cache@v1
+      env:
+        ndk: android-ndk-r20b
+        sdk-tools: 4333796
+      with:
+        path: ~/.android-cache
+        key: ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}
+        restore-keys: |
+          ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}           
+    - name: Setup Android
       run: |
-        wget "https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip" -O ndk.zip
-        unzip ndk.zip && rm ndk.zip
+        wget "https://raw.githubusercontent.com/xxf098/shadowsocksr-v2ray-android/e11d00241361ee400f1a9f77df3d8d3f975c9652/travis-ci/setup.sh" -O setup.sh
+        sed -i 's/r12b/r20b/g' setup.sh && chmod +x setup.sh
+        ./setup.sh
     - name: Check Build
       run: |
         go version

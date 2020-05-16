@@ -20,7 +20,7 @@ export GOPATH="~/go"
 export PATH=$PATH:/usr/local/go/bin:~/go/bin
 # android
 export ANDROID_HOME=/path/to/Android/Sdk
-export ANDROID_NDK_HOME=/path/to/Android/android-ndk-r20b
+export ANDROID_NDK_HOME=/path/to/Android/android-ndk-r21b
 
 
 go get -d ./...
