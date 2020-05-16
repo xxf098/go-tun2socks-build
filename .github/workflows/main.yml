@@ -43,9 +43,14 @@ jobs:
       run: |
         go get -d ./...
         make android
+    - name: Upload AAR
+      uses: actions/upload-artifact@v1
+      with:
+        name: v2raylib
+        path: build/tun2socks.aar
     - name: Check Build
       run: |
         go version
         java -version
         ls "$ANDROID_HOME"
-        ls ./build
+        ls -thla ./build
