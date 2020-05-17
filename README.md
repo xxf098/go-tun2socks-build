@@ -2,6 +2,8 @@
 
 Building and using `go-tun2socks` for V2Ray on Android. This library is used in [shadowsocksr-v2ray-android](https://github.com/xxf098/shadowsocksr-v2ray-android) for support V2Ray.
 
+![build](https://github.com/xxf098/go-tun2socks-build/workflows/build/badge.svg?branch=master&event=push) 
+
 ## Setup
 
 * install go (only test under version 1.14.2)
