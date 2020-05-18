@@ -27,6 +27,7 @@ import (
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 )
 
@@ -771,6 +772,12 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 
 func TestURLLatency(url string) (int64, error) {
 	return testLatency(url)
+}
+
+func TestTCPPing(host string, port int) (int64, error) {
+	tcpping := ping.NewTCPPing(host, port)
+	result := <-tcpping.Start()
+	return result.Get()
 }
 
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
