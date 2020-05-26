@@ -1,6 +1,7 @@
 package tun2socks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -793,4 +794,65 @@ func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
 		return 0, err
 	}
 	return testLatency(socksProxy)
+}
+
+func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
+	vmess := &Vmess{
+		Host:      "",
+		Path:      "",
+		TLS:       "",
+		Add:       "",
+		Port:      0,
+		Aid:       0,
+		Net:       "",
+		ID:        "",
+		Type:      "",
+		Security:  "",
+		RouteMode: 0,
+		DNS:       "",
+		Loglevel:  "",
+	}
+	config, err := DecodeJSONConfig(bytes.NewReader(configBytes))
+	if err != nil {
+		return nil, err
+	}
+	outboundConfig := config.OutboundConfigs[0]
+	settings := []byte("{}")
+	if outboundConfig.Settings != nil {
+		settings = ([]byte)(*outboundConfig.Settings)
+	}
+	outboundConfigLoader := conf.NewJSONConfigLoader(conf.ConfigCreatorCache{
+		"blackhole": func() interface{} { return new(conf.BlackholeConfig) },
+		"freedom":   func() interface{} { return new(conf.FreedomConfig) },
+		// "http":        func() interface{} { return new(conf.HttpClientConfig) },
+		"shadowsocks": func() interface{} { return new(conf.ShadowsocksClientConfig) },
+		"vmess":       func() interface{} { return new(conf.VMessOutboundConfig) },
+		"socks":       func() interface{} { return new(conf.SocksClientConfig) },
+		"mtproto":     func() interface{} { return new(conf.MTProtoClientConfig) },
+		"dns":         func() interface{} { return new(conf.DnsOutboundConfig) },
+	}, "protocol", "settings")
+	if outboundConfig.Protocol != "vmess" {
+		return vmess, err
+	}
+	rawConfig, err := outboundConfigLoader.LoadWithID(settings, outboundConfig.Protocol)
+	if err != nil {
+		return nil, err
+	}
+	vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
+	if !ok {
+		return nil, newError("Not A VMess Config")
+	}
+	for _, vnext := range vmessOutboundConfig.Receivers {
+		vmess.Add = vnext.Address.String()
+		vmess.Port = int(vnext.Port)
+		account := new(conf.VMessAccount)
+		for _, rawUser := range vnext.Users {
+			if err := json.Unmarshal(rawUser, account); err == nil {
+				vmess.ID = account.ID
+				vmess.Aid = int(account.AlterIds)
+				vmess.Security = account.Security
+			}
+		}
+	}
+	return vmess, nil
 }
