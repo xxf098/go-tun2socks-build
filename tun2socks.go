@@ -658,7 +658,8 @@ func QueryStats(direct string) int64 {
 	if statsManager == nil {
 		return 0
 	}
-	name := "vmess>>>" + "ssrray" + ">>>traffic>>>" + direct
+	// name := "vmess>>>" + "ssrray" + ">>>traffic>>>" + direct
+	name := "user>>>" + "xxf098@github.com" + ">>>traffic>>>" + direct + "link"
 	counter := statsManager.GetCounter(name)
 	if counter == nil {
 		return 0
