@@ -39,7 +39,7 @@ var BlockHosts = map[string]*conf.Address{
 var BlockDomains = []string{
 	// "baidu",
 	// "bdstatic",
-	"umeng",
+	// "umeng",
 	"auspiciousvp.com",
 	"www.auspiciousvp.com",
 	"cnzz.com",
@@ -59,4 +59,7 @@ var BlockDomains = []string{
 	"360totalsecurity.com",
 	"at3.doubanio.com",
 	"p.pinduoduo.com",
+	"175.25.22.142",
+	"175.25.22.149",
+	"175.25.22.141",
 }
