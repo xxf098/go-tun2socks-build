@@ -319,8 +319,12 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	return vmessOutboundDetourConfig
 }
 
-func createFreedomOutboundDetourConfig() conf.OutboundDetourConfig {
-	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: "UseIP"})
+func createFreedomOutboundDetourConfig(useIPv6 bool) conf.OutboundDetourConfig {
+	domainStrategy := "useipv4"
+	if useIPv6 {
+		domainStrategy = "useip"
+	}
+	outboundsSettings2, _ := json.Marshal(v2ray.OutboundsSettings{DomainStrategy: domainStrategy})
 	outboundsSettingsMsg2 := json.RawMessage(outboundsSettings2)
 	return conf.OutboundDetourConfig{
 		Protocol: "freedom",

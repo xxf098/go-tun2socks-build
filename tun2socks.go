@@ -63,11 +63,12 @@ type Vmess struct {
 	Security  string // vnext.Security
 	RouteMode int    // for SSRRAY
 	DNS       string // DNS Config
+	UseIPv6   bool
 	Loglevel  string
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, Loglevel string) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, UseIPv6 bool, Loglevel string) *Vmess {
 	return &Vmess{
 		Host:      Host,
 		Path:      Path,
@@ -81,6 +82,7 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		Security:  Security,
 		RouteMode: RouteMode,
 		DNS:       DNS,
+		UseIPv6:   UseIPv6,
 		Loglevel:  Loglevel,
 	}
 }
@@ -237,7 +239,7 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// 	},
 	// }
 	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
-	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig()
+	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig(profile.UseIPv6)
 	// order matters
 	// GFWList mode, use 'direct' as default
 	if profile.RouteMode == 4 {
