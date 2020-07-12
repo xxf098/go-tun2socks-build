@@ -385,7 +385,6 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		OutboundTag: "proxy",
 		Domain:      []string{"domain:googleapis.cn"},
 	})
-	// all
 	rules := []json.RawMessage{}
 	if routeMode == 1 {
 		rules = []json.RawMessage{
@@ -460,18 +459,22 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DnsConfig {
 	dns := strings.Split(dnsConf, ",")
 	nameServerConfig := []*conf.NameServerConfig{}
 	if routeMode == 2 || routeMode == 3 || routeMode == 4 {
-		split := strings.Split(dns[0], ":")
-		port, _ := strconv.Atoi(split[1])
-		nameServerConfig = []*conf.NameServerConfig{
-			&conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(split[0])}, Port: uint16(port)},
-		}
-	} else {
 		for i := len(dns) - 1; i >= 0; i-- {
-			split := strings.Split(dns[0], ":")
+			split := strings.Split(dns[i], ":")
 			port, _ := strconv.Atoi(split[1])
 			newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(split[0])}, Port: uint16(port)}
+			if i == 1 {
+				newConfig.Domains = []string{"geosite:cn"}
+			}
 			nameServerConfig = append(nameServerConfig, newConfig)
 		}
+	} else {
+		// for i := len(dns) - 1; i >= 0; i-- {
+		split := strings.Split(dns[0], ":")
+		port, _ := strconv.Atoi(split[1])
+		newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(split[0])}, Port: uint16(port)}
+		nameServerConfig = append(nameServerConfig, newConfig)
+		// }
 	}
 	return &conf.DnsConfig{
 		Hosts:   v2ray.BlockHosts,
