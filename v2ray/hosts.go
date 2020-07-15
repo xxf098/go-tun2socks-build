@@ -37,11 +37,14 @@ var BlockHosts = map[string]*conf.Address{
 
 // no prefix is substr
 var BlockDomains = []string{
+	"175.25.22.142",
+	"175.25.22.149",
+	"175.25.22.141",
 	// "baidu",
 	// "bdstatic",
 	// "umeng",
 	"auspiciousvp.com",
-	"www.auspiciousvp.com",
+	// "www.auspiciousvp.com",
 	"cnzz.com",
 	// "toutiao",
 	// "snssdk.com",
@@ -57,9 +60,9 @@ var BlockDomains = []string{
 	// "qhupdate.com",
 	// "360safe.com",
 	"360totalsecurity.com",
+	"ad.doubanio.com",
 	"at3.doubanio.com",
 	"p.pinduoduo.com",
-	"175.25.22.142",
-	"175.25.22.149",
-	"175.25.22.141",
+	"hm.baidu.com",
+	"eclick.baidu.com",
 }

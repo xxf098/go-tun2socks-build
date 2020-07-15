@@ -387,7 +387,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	googleAPI, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "proxy",
-		Domain:      []string{"domain:googleapis.cn"},
+		Domain:      []string{"domain:googleapis.cn", "domain:gstatic.com", "domain:ampproject.org"},
 	})
 	rules := []json.RawMessage{}
 	if routeMode == 1 {
