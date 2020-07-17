@@ -403,6 +403,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(blockDomain),
 			json.RawMessage(bypassChinaSite),
 			json.RawMessage(bypassChinaIP),
+			json.RawMessage(gfwList),
 		}
 	}
 	if routeMode == 3 {
@@ -412,6 +413,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(bypassLAN),
 			json.RawMessage(bypassChinaSite),
 			json.RawMessage(bypassChinaIP),
+			json.RawMessage(gfwList),
 		}
 	}
 	if routeMode == 4 {
@@ -423,7 +425,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	}
 	if routeMode == 5 {
 		rules = []json.RawMessage{
-			json.RawMessage(googleAPI),
+			// json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
 			json.RawMessage(chinaListSite),
 			json.RawMessage(chinaListIP),
