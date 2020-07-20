@@ -87,10 +87,6 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 	}
 }
 
-// type DBService interface {
-// 	InsertProxyLog(target, tag string, startTime, endTime int64, uploadBytes, downloadBytes int32, recordType, dnsQueryType int32, dnsRequest, dnsResponse string, dnsNumIPs int32)
-// }
-
 // TODO: try with native struct config conf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
@@ -486,9 +482,6 @@ func StartV2Ray(
 	configBytes []byte,
 	assetPath string) error {
 	if packetFlow != nil {
-		// if dbService != nil {
-		// 	vsession.DefaultDBService = dbService
-		// }
 
 		if lwipStack == nil {
 			// Setup the lwIP stack.
@@ -571,9 +564,6 @@ func StartV2RayWithVmess(
 	profile *Vmess,
 	assetPath string) error {
 	if packetFlow != nil {
-		// if dbService != nil {
-		// 	vsession.DefaultDBService = dbService
-		// }
 
 		if lwipStack == nil {
 			// Setup the lwIP stack.
@@ -652,7 +642,6 @@ func StopV2Ray() {
 	}
 	v.Close()
 	v = nil
-	// vsession.DefaultDBService = nil
 }
 
 // ~/go/src/v2ray.com/core/proxy/vmess/outbound/outbound.go
