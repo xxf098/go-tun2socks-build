@@ -18,6 +18,7 @@ ios:
 	eval $(BUILD_IOS)
 
 android:
+	rm -rf $(BUILDDIR) 2>/dev/null
 	mkdir -p $(BUILDDIR)
 	eval $(BUILD_ANDROID)
 
