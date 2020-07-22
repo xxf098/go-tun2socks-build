@@ -49,6 +49,11 @@ func newError(values ...interface{}) *verrors.Error {
 	return verrors.New(values...).WithPathObj(errPathObjHolder{})
 }
 
+type VmessOptions struct {
+	UseIPv6  bool   `json:"useIPv6"`
+	Loglevel string `json:"logLevel"`
+}
+
 // constructor export New
 type Vmess struct {
 	Host      string
@@ -63,27 +68,33 @@ type Vmess struct {
 	Security  string // vnext.Security
 	RouteMode int    // for SSRRAY
 	DNS       string // DNS Config
-	UseIPv6   bool
-	Loglevel  string
+	VmessOptions
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, UseIPv6 bool, Loglevel string) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, opt []byte) *Vmess {
+	var options VmessOptions
+	err := json.Unmarshal(opt, &options)
+	if err != nil {
+		options = VmessOptions{
+			UseIPv6:  false,
+			Loglevel: "error",
+		}
+	}
 	return &Vmess{
-		Host:      Host,
-		Path:      Path,
-		TLS:       TLS,
-		Add:       Add,
-		Port:      Port,
-		Aid:       Aid,
-		Net:       Net,
-		ID:        ID,
-		Type:      Type,
-		Security:  Security,
-		RouteMode: RouteMode,
-		DNS:       DNS,
-		UseIPv6:   UseIPv6,
-		Loglevel:  Loglevel,
+		Host:         Host,
+		Path:         Path,
+		TLS:          TLS,
+		Add:          Add,
+		Port:         Port,
+		Aid:          Aid,
+		Net:          Net,
+		ID:           ID,
+		Type:         Type,
+		Security:     Security,
+		RouteMode:    RouteMode,
+		DNS:          DNS,
+		VmessOptions: options,
 	}
 }
 
@@ -802,7 +813,6 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		Security:  "",
 		RouteMode: 0,
 		DNS:       "",
-		Loglevel:  "",
 	}
 	config, err := DecodeJSONConfig(bytes.NewReader(configBytes))
 	if err != nil {
