@@ -50,35 +50,36 @@ func newError(values ...interface{}) *verrors.Error {
 }
 
 type VmessOptions struct {
-	UseIPv6  bool   `json:"useIPv6"`
-	Loglevel string `json:"logLevel"`
+	UseIPv6   bool   `json:"useIPv6"`
+	Loglevel  string `json:"logLevel"`
+	RouteMode int    `json:"routeMode"` // for SSRRAY
 }
 
 // constructor export New
 type Vmess struct {
-	Host      string
-	Path      string
-	TLS       string
-	Add       string
-	Port      int
-	Aid       int
-	Net       string
-	ID        string
-	Type      string // headerType
-	Security  string // vnext.Security
-	RouteMode int    // for SSRRAY
-	DNS       string // DNS Config
+	Host     string
+	Path     string
+	TLS      string
+	Add      string
+	Port     int
+	Aid      int
+	Net      string
+	ID       string
+	Type     string // headerType
+	Security string // vnext.Security
+	DNS      string // DNS Config
 	VmessOptions
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, RouteMode int, DNS string, opt []byte) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, DNS string, opt []byte) *Vmess {
 	var options VmessOptions
 	err := json.Unmarshal(opt, &options)
 	if err != nil {
 		options = VmessOptions{
-			UseIPv6:  false,
-			Loglevel: "error",
+			UseIPv6:   false,
+			Loglevel:  "error",
+			RouteMode: 0,
 		}
 	}
 	return &Vmess{
@@ -92,7 +93,6 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		ID:           ID,
 		Type:         Type,
 		Security:     Security,
-		RouteMode:    RouteMode,
 		DNS:          DNS,
 		VmessOptions: options,
 	}
@@ -801,18 +801,17 @@ func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
 
 func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 	vmess := &Vmess{
-		Host:      "",
-		Path:      "",
-		TLS:       "",
-		Add:       "",
-		Port:      0,
-		Aid:       0,
-		Net:       "",
-		ID:        "",
-		Type:      "",
-		Security:  "",
-		RouteMode: 0,
-		DNS:       "",
+		Host:     "",
+		Path:     "",
+		TLS:      "",
+		Add:      "",
+		Port:     0,
+		Aid:      0,
+		Net:      "",
+		ID:       "",
+		Type:     "",
+		Security: "",
+		DNS:      "",
 	}
 	config, err := DecodeJSONConfig(bytes.NewReader(configBytes))
 	if err != nil {
