@@ -620,6 +620,7 @@ func StartV2RayWithVmess(
 			DestinationOverride: strings.Split("tls,http", ","),
 		}
 		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
+		ctx = context.WithValue(ctx, "routeMode", profile.RouteMode)
 
 		// Register tun2socks connection handlers.
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
