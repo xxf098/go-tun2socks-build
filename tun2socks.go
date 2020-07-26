@@ -50,9 +50,10 @@ func newError(values ...interface{}) *verrors.Error {
 }
 
 type VmessOptions struct {
-	UseIPv6   bool   `json:"useIPv6"`
-	Loglevel  string `json:"logLevel"`
-	RouteMode int    `json:"routeMode"` // for SSRRAY
+	UseIPv6        bool   `json:"useIPv6"`
+	Loglevel       string `json:"logLevel"`
+	RouteMode      int    `json:"routeMode"` // for SSRRAY
+	EnableSniffing bool   `json:"enableSniffing"`
 }
 
 // constructor export New
@@ -613,15 +614,15 @@ func StartV2RayWithVmess(
 			log.Fatalf("start V instance failed: %v", err)
 			return err
 		}
-
+		ctx := context.WithValue(context.Background(), "routeMode", profile.RouteMode)
 		// Configure sniffing settings for traffic coming from tun2socks.
-		sniffingConfig := &vproxyman.SniffingConfig{
-			Enabled:             true,
-			DestinationOverride: strings.Split("tls,http", ","),
+		if profile.EnableSniffing {
+			sniffingConfig := &vproxyman.SniffingConfig{
+				Enabled:             true,
+				DestinationOverride: strings.Split("tls,http", ","),
+			}
+			ctx = vproxyman.ContextWithSniffingConfig(ctx, sniffingConfig)
 		}
-		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
-		ctx = context.WithValue(ctx, "routeMode", profile.RouteMode)
-
 		// Register tun2socks connection handlers.
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
 		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
