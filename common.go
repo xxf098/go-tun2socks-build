@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	vcore "v2ray.com/core"
 	verrors "v2ray.com/core/common/errors"
@@ -317,6 +318,22 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		vmessOutboundDetourConfig.StreamSetting.TLSSettings = tlsConfig
 	}
 	return vmessOutboundDetourConfig
+}
+
+func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
+	config := profile.Trojan
+	outboundsSettings, _ := json.Marshal(trojan.OutboundsSettings{
+		Address:    config.Add,
+		Password:   config.Password,
+		Port:       config.Port,
+		ServerName: config.SNI,
+	})
+	outboundsSettingsMsg := json.RawMessage(outboundsSettings)
+	return conf.OutboundDetourConfig{
+		Protocol: "trojan",
+		Tag:      "proxy",
+		Settings: &outboundsSettingsMsg,
+	}
 }
 
 func createFreedomOutboundDetourConfig(useIPv6 bool) conf.OutboundDetourConfig {

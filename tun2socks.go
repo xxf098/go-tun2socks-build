@@ -44,6 +44,12 @@ const (
 )
 
 type errPathObjHolder struct{}
+type protocol string
+
+const (
+	VMESS  protocol = protocol("vmess")
+	TROJAN protocol = protocol("trojan")
+)
 
 func newError(values ...interface{}) *verrors.Error {
 	return verrors.New(values...).WithPathObj(errPathObjHolder{})
@@ -55,6 +61,36 @@ type VmessOptions struct {
 	RouteMode      int    `json:"routeMode"` // for SSRRAY
 	EnableSniffing bool   `json:"enableSniffing"`
 	DNS            string `json:"dns"` // DNS Config
+}
+
+type Trojan struct {
+	Add            string
+	Port           int
+	Password       string
+	SNI            string
+	SkipCertVerify bool
+	VmessOptions
+}
+
+func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, opt []byte) *Trojan {
+	var options VmessOptions
+	err := json.Unmarshal(opt, &options)
+	if err != nil {
+		options = VmessOptions{
+			UseIPv6:   false,
+			Loglevel:  "error",
+			RouteMode: 0,
+			DNS:       "1.1.1.1:53,223.5.5.5:53",
+		}
+	}
+	return &Trojan{
+		Add:            Add,
+		Port:           Port,
+		Password:       Password,
+		SNI:            SNI,
+		SkipCertVerify: SkipCertVerify,
+		VmessOptions:   options,
+	}
 }
 
 // constructor export New
@@ -69,7 +105,9 @@ type Vmess struct {
 	ID       string
 	Type     string // headerType
 	Security string // vnext.Security
+	Protocol protocol
 	VmessOptions
+	Trojan *Trojan
 }
 
 // TODO: default value
@@ -95,25 +133,9 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		ID:           ID,
 		Type:         Type,
 		Security:     Security,
+		Protocol:     VMESS,
 		VmessOptions: options,
-	}
-}
-
-type Trojan struct {
-	Add            string
-	Port           int
-	Password       string
-	SNI            string
-	SkipCertVerify bool
-}
-
-func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool) *Trojan {
-	return &Trojan{
-		Add:            Add,
-		Port:           Port,
-		Password:       Password,
-		SNI:            SNI,
-		SkipCertVerify: SkipCertVerify,
+		Trojan:       nil,
 	}
 }
 
@@ -264,18 +286,25 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// 		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 	// 	},
 	// }
-	vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
+	proxyOutboundConfig := conf.OutboundDetourConfig{}
+	if profile.Protocol == VMESS {
+		proxyOutboundConfig = createVmessOutboundDetourConfig(profile)
+	}
+	if profile.Protocol == TROJAN {
+		proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
+	}
+	// vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
 	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig(profile.UseIPv6)
 	// order matters
 	// GFWList mode, use 'direct' as default
 	if profile.RouteMode == 4 {
 		jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 			freedomOutboundDetourConfig,
-			vmessOutboundDetourConfig,
+			proxyOutboundConfig,
 		}
 	} else {
 		jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
-			vmessOutboundDetourConfig,
+			proxyOutboundConfig,
 			freedomOutboundDetourConfig,
 		}
 	}
@@ -658,6 +687,20 @@ func StartV2RayWithVmess(
 		return nil
 	}
 	return errors.New("packetFlow is null")
+}
+
+func StartTrojan(
+	packetFlow PacketFlow,
+	vpnService VpnService,
+	logService LogService,
+	trojan *Trojan,
+	assetPath string) error {
+	profile := &Vmess{
+		Protocol:     TROJAN,
+		Trojan:       trojan,
+		VmessOptions: trojan.VmessOptions,
+	}
+	return StartV2RayWithVmess(packetFlow, vpnService, logService, profile, assetPath)
 }
 
 // StopV2Ray stop v2ray
