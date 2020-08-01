@@ -54,6 +54,7 @@ type VmessOptions struct {
 	Loglevel       string `json:"logLevel"`
 	RouteMode      int    `json:"routeMode"` // for SSRRAY
 	EnableSniffing bool   `json:"enableSniffing"`
+	DNS            string `json:"dns"` // DNS Config
 }
 
 // constructor export New
@@ -68,12 +69,11 @@ type Vmess struct {
 	ID       string
 	Type     string // headerType
 	Security string // vnext.Security
-	DNS      string // DNS Config
 	VmessOptions
 }
 
 // TODO: default value
-func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, DNS string, opt []byte) *Vmess {
+func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, opt []byte) *Vmess {
 	var options VmessOptions
 	err := json.Unmarshal(opt, &options)
 	if err != nil {
@@ -81,6 +81,7 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 			UseIPv6:   false,
 			Loglevel:  "error",
 			RouteMode: 0,
+			DNS:       "1.1.1.1:53,223.5.5.5:53",
 		}
 	}
 	return &Vmess{
@@ -94,7 +95,6 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		ID:           ID,
 		Type:         Type,
 		Security:     Security,
-		DNS:          DNS,
 		VmessOptions: options,
 	}
 }
@@ -122,7 +122,7 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
 	vmessConfig.Log = v2ray.Log{Access: "", Error: "", Loglevel: profile.Loglevel}
 	vmessConfig.DNS = v2ray.DNS{
-		Servers: []string{"1.0.0.1", "localhost"},
+		Servers: []string{"1.1.1.1", "localhost"},
 		Hosts:   v2ray.Hosts{"baidu.com": "127.0.0.1", "umeng.com": "127.0.0.1"},
 	}
 	vmessConfig.Routing = v2ray.Routing{
@@ -831,7 +831,6 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		ID:       "",
 		Type:     "",
 		Security: "",
-		DNS:      "",
 	}
 	config, err := DecodeJSONConfig(bytes.NewReader(configBytes))
 	if err != nil {
