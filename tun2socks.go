@@ -99,6 +99,24 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 	}
 }
 
+type Trojan struct {
+	Add            string
+	Port           int
+	Password       string
+	SNI            string
+	SkipCertVerify bool
+}
+
+func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool) *Trojan {
+	return &Trojan{
+		Add:            Add,
+		Port:           Port,
+		Password:       Password,
+		SNI:            SNI,
+		SkipCertVerify: SkipCertVerify,
+	}
+}
+
 // TODO: try with native struct config conf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	vmessConfig := v2ray.VmessConfig{}
