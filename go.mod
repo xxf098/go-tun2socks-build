@@ -1,9 +1,11 @@
 module github.com/xxf098/go-tun2socks-build
 
-go 1.13
+go 1.14
 
 require (
 	github.com/eycorsican/go-tun2socks v1.16.8
 	golang.org/x/mobile v0.0.0-20191210151939-1a1fef82734d // indirect
 	v2ray.com/core v4.19.1+incompatible
 )
+
+replace v2ray.com/core v4.19.1+incompatible => github.com/v2fly/v2ray-core
