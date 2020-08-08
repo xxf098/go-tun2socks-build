@@ -8,4 +8,5 @@ require (
 	v2ray.com/core v4.19.1+incompatible
 )
 
+// replace with v2ray-core path
 replace v2ray.com/core v4.19.1+incompatible => ./v2ray-core

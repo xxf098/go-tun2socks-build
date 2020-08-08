@@ -20,20 +20,17 @@ type tcpHandler struct {
 	v   *vcore.Instance
 }
 
-func (h *tcpHandler) handleInput(conn net.Conn, input io.ReadCloser) {
-	defer func() {
-		conn.Close()
-		input.Close()
+func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
+	closeConn := func() {
+		lhs.Close()
+		rhs.Close()
+	}
+	go func() {
+		io.Copy(rhs, lhs)
+		closeConn() // Close the conn anyway.
 	}()
-	io.Copy(conn, input)
-}
-
-func (h *tcpHandler) handleOutput(conn net.Conn, output io.WriteCloser) {
-	defer func() {
-		conn.Close()
-		output.Close()
-	}()
-	io.Copy(output, conn)
+	io.Copy(lhs, rhs)
+	closeConn()
 }
 
 func NewTCPHandler(ctx context.Context, instance *vcore.Instance) core.TCPConnHandler {
@@ -51,8 +48,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
 	}
-	go h.handleInput(conn, c)
-	go h.handleOutput(conn, c)
+	go h.relay(conn, c)
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
