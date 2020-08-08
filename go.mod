@@ -8,4 +8,4 @@ require (
 	v2ray.com/core v4.19.1+incompatible
 )
 
-replace v2ray.com/core v4.19.1+incompatible => github.com/v2fly/v2ray-core
+replace v2ray.com/core v4.19.1+incompatible => ./v2ray-core
