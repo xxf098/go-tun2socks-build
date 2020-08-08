@@ -464,6 +464,15 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	}
 }
 
+func creatPolicyConfig() *conf.PolicyConfig {
+	return &conf.PolicyConfig{
+		System: &conf.SystemPolicy{
+			StatsOutboundUplink:   true,
+			StatsOutboundDownlink: true,
+		},
+	}
+}
+
 // remove https://github.com/v2ray/v2ray-core/blob/02b658cd2beb5968818c7ed37388fb348b9b9cb9/app/dns/server.go#L362
 func createDNSConfig(routeMode int, dnsConf string) *conf.DnsConfig {
 	// nameServerConfig := []*conf.NameServerConfig{

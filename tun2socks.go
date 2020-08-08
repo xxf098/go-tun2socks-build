@@ -308,6 +308,8 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 			freedomOutboundDetourConfig,
 		}
 	}
+	// policy
+	jsonConfig.Policy = creatPolicyConfig()
 	// stats
 	jsonConfig.Stats = &conf.StatsConfig{}
 	return jsonConfig, nil
@@ -726,6 +728,18 @@ func QueryStats(direct string) int64 {
 	name := "vmess>>>" + "ssrray" + ">>>traffic>>>" + direct
 	// name := "user>>>" + "xxf098@github.com" + ">>>traffic>>>" + direct + "link"
 	counter := statsManager.GetCounter(name)
+	if counter == nil {
+		return 0
+	}
+	return counter.Set(0)
+}
+
+// add in v2ray-core v4.26.0
+func QueryOutboundStats(tag string, direct string) int64 {
+	if statsManager == nil {
+		return 0
+	}
+	counter := statsManager.GetCounter(fmt.Sprintf("outbound>>>%s>>>traffic>>>%s", tag, direct))
 	if counter == nil {
 		return 0
 	}
