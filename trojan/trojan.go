@@ -5,4 +5,5 @@ type OutboundsSettings struct {
 	Port       int    `json:"port"`
 	Password   string `json:"password"`
 	ServerName string `json:"serverName"` // sni
+	SkipVerify bool `json:"skipVerify"`
 }

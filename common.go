@@ -327,6 +327,7 @@ func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig 
 		Password:   config.Password,
 		Port:       config.Port,
 		ServerName: config.SNI,
+		SkipVerify: config.SkipCertVerify,
 	})
 	outboundsSettingsMsg := json.RawMessage(outboundsSettings)
 	return conf.OutboundDetourConfig{
