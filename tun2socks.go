@@ -93,6 +93,14 @@ func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify
 	}
 }
 
+func (t *Trojan) toVmess() *Vmess {
+	return &Vmess{
+		Protocol:     TROJAN,
+		Trojan:       t,
+		VmessOptions: t.VmessOptions,
+	}
+}
+
 // constructor export New
 type Vmess struct {
 	Host     string
@@ -137,6 +145,17 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		VmessOptions: options,
 		Trojan:       nil,
 	}
+}
+
+func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
+	proxyOutboundConfig := conf.OutboundDetourConfig{}
+	if profile.Protocol == VMESS {
+		proxyOutboundConfig = createVmessOutboundDetourConfig(profile)
+	}
+	if profile.Protocol == TROJAN {
+		proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
+	}
+	return proxyOutboundConfig
 }
 
 // TODO: try with native struct config conf.vmess
@@ -286,14 +305,13 @@ func loadVmessConfig(profile *Vmess) (*conf.Config, error) {
 	// 		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 	// 	},
 	// }
-	proxyOutboundConfig := conf.OutboundDetourConfig{}
-	if profile.Protocol == VMESS {
-		proxyOutboundConfig = createVmessOutboundDetourConfig(profile)
-	}
-	if profile.Protocol == TROJAN {
-		proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
-	}
-	// vmessOutboundDetourConfig := createVmessOutboundDetourConfig(profile)
+	proxyOutboundConfig := profile.getProxyOutboundDetourConfig()
+	// if profile.Protocol == VMESS {
+	// 	proxyOutboundConfig = createVmessOutboundDetourConfig(profile)
+	// }
+	// if profile.Protocol == TROJAN {
+	// 	proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
+	// }
 	freedomOutboundDetourConfig := createFreedomOutboundDetourConfig(profile.UseIPv6)
 	// order matters
 	// GFWList mode, use 'direct' as default
@@ -469,7 +487,7 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 		createInboundDetourConfig(port),
 	}
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
-		createVmessOutboundDetourConfig(profile),
+		profile.getProxyOutboundDetourConfig(),
 	}
 	jsonConfig.Stats = &conf.StatsConfig{}
 	return jsonConfig, nil
@@ -697,11 +715,7 @@ func StartTrojan(
 	logService LogService,
 	trojan *Trojan,
 	assetPath string) error {
-	profile := &Vmess{
-		Protocol:     TROJAN,
-		Trojan:       trojan,
-		VmessOptions: trojan.VmessOptions,
-	}
+	profile := trojan.toVmess()
 	return StartV2RayWithVmess(packetFlow, vpnService, logService, profile, assetPath)
 }
 
