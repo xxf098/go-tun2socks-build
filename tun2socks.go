@@ -865,6 +865,11 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	return checkServerCredentials("127.0.0.1", proxyPort)
 }
 
+func TestTrojanLatency(trojan *Trojan, assetPath string, port int) (int64, error) {
+	profile := trojan.toVmess()
+	return TestVmessLatency(profile, assetPath, port)
+}
+
 func TestURLLatency(url string) (int64, error) {
 	return testLatency(url)
 }
