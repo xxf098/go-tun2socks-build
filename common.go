@@ -82,7 +82,7 @@ func checkServerCredentials(ip string, port uint32) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	remoteHost := "www.gstatic.com"
+	remoteHost := "clients3.google.com"
 	remotePort := 80
 	b := make([]byte, 0, 6+len(remoteHost))
 	b = append(b, Version5)
@@ -122,7 +122,7 @@ func checkServerCredentials(ip string, port uint32) (int64, error) {
 	}
 	// timeout then retry
 	start := time.Now()
-	if err = send204Request(&conn, 1*time.Second); err != nil {
+	if err = send204Request(&conn, 1200*time.Millisecond); err != nil {
 		return 0, err
 	}
 	elapsed := time.Since(start)
@@ -134,8 +134,8 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
-	remoteHost := "www.gstatic.com"
-	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nCache-Control: max-age=90\r\n\r\n", remoteHost)
+	remoteHost := "clients3.google.com"
+	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nCache-Control: max-age=60\r\n\r\n", remoteHost)
 	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
 		return err
 	}
