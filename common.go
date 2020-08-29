@@ -18,6 +18,7 @@ import (
 	vcore "v2ray.com/core"
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
+	vsession "v2ray.com/core/common/session"
 	vinbound "v2ray.com/core/features/inbound"
 	"v2ray.com/core/infra/conf"
 	json_reader "v2ray.com/core/infra/conf/json"
@@ -71,7 +72,7 @@ func testLatency(url string) (int64, error) {
 // https://github.com/golang/net/blob/master/internal/socks/client.go
 // scoks5 test vmess test
 // TODO: error message
-func checkServerCredentials(ip string, port uint32) (int64, error) {
+func testLatencyWithSocks5(ip string, port uint32) (int64, error) {
 	addr := fmt.Sprintf("%s:%d", ip, port)
 	conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
 	defer conn.Close()
@@ -149,6 +150,30 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 		return fmt.Errorf("error response: %s", httpResponse)
 	}
 	return nil
+}
+
+func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
+	dest := vnet.Destination{
+		Address: vnet.DomainAddress("clients3.google.com"),
+		Network: vnet.Network_TCP,
+		Port:    vnet.Port(80),
+	}
+	sid := vsession.NewID()
+	ctx := vsession.ContextWithID(context.Background(), sid)
+	conn, err := vcore.Dial(ctx, v, dest)
+	if err != nil {
+		return 0, errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
+	}
+	if err = send204Request(&conn, 2*time.Second); err != nil {
+		return 0, err
+	}
+	// timeout then retry
+	start := time.Now()
+	if err = send204Request(&conn, 1280*time.Millisecond); err != nil {
+		return 0, err
+	}
+	elapsed := time.Since(start)
+	return elapsed.Milliseconds(), nil
 }
 
 func addInboundHandler(server *vcore.Instance) (string, error) {
