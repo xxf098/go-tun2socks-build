@@ -483,8 +483,10 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 			},
 		},
 	}
-	jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
-		createInboundDetourConfig(port),
+	if port > 0 && port < 65535 {
+		jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
+			createInboundDetourConfig(port),
+		}
 	}
 	jsonConfig.OutboundConfigs = []conf.OutboundDetourConfig{
 		profile.getProxyOutboundDetourConfig(),
@@ -843,11 +845,13 @@ func TestConfig(ConfigureFileContent string, assetperfix string) error {
 	return err
 }
 
-func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error) {
-	os.Setenv("v2ray.location.asset", assetPath)
+func TestVmessLatency(profile *Vmess, port int) (int64, error) {
+	// os.Setenv("v2ray.location.asset", assetPath)
 	var proxyPort = testProxyPort
 	if port > 0 && port < 65535 {
 		proxyPort = uint32(port)
+	} else {
+		proxyPort = uint32(0)
 	}
 	config, err := loadVmessTestConfig(profile, proxyPort)
 	if err != nil {
@@ -862,12 +866,16 @@ func TestVmessLatency(profile *Vmess, assetPath string, port int) (int64, error)
 	// socksProxy := fmt.Sprintf("socks5://127.0.0.1:%d", proxyPort)
 	// socksProxy, err := addInboundHandler(server)
 	// return testLatency(socksProxy)
-	return checkServerCredentials("127.0.0.1", proxyPort)
+	if proxyPort == 0 {
+		return testLatencyWithHTTP(server)
+	} else {
+		return testLatencyWithSocks5("127.0.0.1", proxyPort)
+	}
 }
 
-func TestTrojanLatency(trojan *Trojan, assetPath string, port int) (int64, error) {
+func TestTrojanLatency(trojan *Trojan) (int64, error) {
 	profile := trojan.toVmess()
-	return TestVmessLatency(profile, assetPath, port)
+	return TestVmessLatency(profile, -1)
 }
 
 func TestURLLatency(url string) (int64, error) {
