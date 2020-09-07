@@ -417,6 +417,11 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		OutboundTag: "proxy",
 		Domain:      []string{"geosite:geolocation-!cn"},
 	})
+	gfwListIP, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "proxy",
+		IP:          []string{"1.1.1.1/32", "1.0.0.1/32", "8.8.8.8/32", "8.8.4.4/32"},
+	})
 	chinaListSite, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "proxy",
@@ -463,6 +468,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		rules = []json.RawMessage{
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
+			json.RawMessage(gfwListIP),
 			json.RawMessage(gfwList),
 		}
 	}

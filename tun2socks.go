@@ -685,7 +685,7 @@ func StartV2RayWithVmess(
 		}
 		ctx := context.WithValue(context.Background(), "routeMode", profile.RouteMode)
 		// Configure sniffing settings for traffic coming from tun2socks.
-		if profile.EnableSniffing {
+		if profile.EnableSniffing || profile.RouteMode == 4 {
 			sniffingConfig := &vproxyman.SniffingConfig{
 				Enabled:             true,
 				DestinationOverride: strings.Split("tls,http", ","),
