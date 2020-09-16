@@ -28,7 +28,10 @@ import (
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/songgao/water"
 	"github.com/xxf098/go-tun2socks-build/ping"
+	"github.com/xxf098/go-tun2socks-build/pool"
+	"github.com/xxf098/go-tun2socks-build/runner"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 )
 
@@ -36,6 +39,11 @@ var localDNS = "223.5.5.5:53"
 var err error
 var lwipStack core.LWIPStack
 var v *vcore.Instance
+var mtuUsed int
+var lwipTUNDataPipeTask *runner.Task
+var updateStatusPipeTask *runner.Task
+var tunDev *water.Interface
+var lwipWriter io.Writer
 var statsManager v2stats.Manager
 var isStopped = false
 
@@ -539,6 +547,10 @@ func InputPacket(data []byte) {
 	}
 }
 
+type QuerySpeed interface {
+	UpdateTraffic(up int64, down int64)
+}
+
 // SetNonblock puts the fd in blocking or non-blocking mode.
 func SetNonblock(fd int, nonblocking bool) bool {
 	err := syscall.SetNonblock(fd, nonblocking)
@@ -711,6 +723,156 @@ func StartV2RayWithVmess(
 	return errors.New("packetFlow is null")
 }
 
+func openTunDevice(tunFd int) (*water.Interface, error) {
+	file := os.NewFile(uintptr(tunFd), "tun") // dummy file path name since we already got the fd
+	tunDev = &water.Interface{
+		ReadWriteCloser: file,
+	}
+	return tunDev, nil
+}
+
+// TODO: support ipv6
+func StartV2RayWithTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	profile *Vmess,
+	assetPath string) error {
+	tunDev, err = openTunDevice(tunFd)
+	if err != nil {
+		log.Fatalf("failed to open tun device: %v", err)
+	}
+	if lwipStack != nil {
+		lwipStack.Close()
+	}
+	lwipStack = core.NewLWIPStack()
+	lwipWriter = lwipStack.(io.Writer)
+
+	// init v2ray
+	os.Setenv("v2ray.location.asset", assetPath)
+	registerLogService(logService)
+	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+	protectFd := func(s VpnService, fd int) error {
+		if s.Protect(fd) {
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+		}
+	}
+	netCtlr := func(network, address string, fd uintptr) error {
+		return protectFd(vpnService, int(fd))
+	}
+	vinternet.RegisterDialerController(netCtlr)
+	vinternet.RegisterListenerController(netCtlr)
+	core.SetBufferPool(vbytespool.GetPool(core.BufSize))
+
+	v, err = startInstance(profile, nil)
+	if err != nil {
+		log.Fatalf("start V instance failed: %v", err)
+		return err
+	}
+	ctx := context.WithValue(context.Background(), "routeMode", profile.RouteMode)
+	// Configure sniffing settings for traffic coming from tun2socks.
+	if profile.EnableSniffing || profile.RouteMode == 4 {
+		sniffingConfig := &vproxyman.SniffingConfig{
+			Enabled:             true,
+			DestinationOverride: strings.Split("tls,http", ","),
+		}
+		ctx = vproxyman.ContextWithSniffingConfig(ctx, sniffingConfig)
+	}
+	// Register tun2socks connection handlers.
+	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
+	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+
+	// Write IP packets back to TUN.
+	core.RegisterOutputFn(func(data []byte) (int, error) {
+		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
+		return tunDev.Write(data)
+	})
+	isStopped = false
+
+	if lwipTUNDataPipeTask != nil && lwipTUNDataPipeTask.Running() {
+		lwipTUNDataPipeTask.Stop()
+		<-lwipTUNDataPipeTask.StopChan()
+	}
+
+	if updateStatusPipeTask != nil && updateStatusPipeTask.Running() {
+		updateStatusPipeTask.Stop()
+		<-updateStatusPipeTask.StopChan()
+	}
+
+	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
+		// do setup
+		// defer func(){
+		//   // do teardown
+		// }
+		zeroErr := errors.New("nil")
+		maxErrorTimes := 20
+		buf := pool.NewBytes(pool.BufSize)
+		defer pool.FreeBytes(buf)
+		for {
+			// tun -> lwip
+			nr, er := tunDev.Read(buf)
+			if nr > 0 {
+				nw, ew := lwipWriter.Write(buf[0:nr])
+				if ew != nil {
+					err = ew
+					break
+				}
+				if nr != nw {
+					err = errors.New("short write")
+					break
+				}
+				// if nw > 0 {
+				// 	written += int64(nw)
+				// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
+				// }
+			}
+			if er != nil {
+				if er != io.EOF {
+					err = er
+				}
+				break
+			}
+			if err != nil {
+				maxErrorTimes--
+				logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
+			}
+			if shouldStop() {
+				logService.WriteLog("got DataPipe stop signal")
+				break
+			}
+			if maxErrorTimes <= 0 {
+				logService.WriteLog("lwipTUNDataPipeTask returns due to exceeded error times")
+				return err
+			}
+		}
+		return zeroErr // any errors?
+	})
+	updateStatusPipeTask = runner.Go(func(shouldStop runner.S) error {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		zeroErr := errors.New("nil")
+		for {
+			if shouldStop() {
+				break
+			}
+			select {
+			case <-ticker.C:
+				up := QueryOutboundStats("proxy", "uplink")
+				down := QueryOutboundStats("proxy", "downlink")
+				querySpeed.UpdateTraffic(up, down)
+			case <-lwipTUNDataPipeTask.StopChan():
+				return errors.New("stopped")
+			}
+		}
+		return zeroErr
+	})
+	logService.WriteLog("V2Ray Started!")
+	return nil
+}
+
 func StartTrojan(
 	packetFlow PacketFlow,
 	vpnService VpnService,
@@ -721,9 +883,32 @@ func StartTrojan(
 	return StartV2RayWithVmess(packetFlow, vpnService, logService, profile, assetPath)
 }
 
+func StartTrojanTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	trojan *Trojan,
+	assetPath string) error {
+	profile := trojan.toVmess()
+	return StartV2RayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
+}
+
 // StopV2Ray stop v2ray
 func StopV2Ray() {
 	isStopped = true
+	err := tunDev.Close()
+	if err != nil {
+		log.Printf("close tun: %v", err)
+	}
+	if updateStatusPipeTask != nil && updateStatusPipeTask.Running() {
+		updateStatusPipeTask.Stop()
+		<-updateStatusPipeTask.StopChan()
+	}
+	if lwipTUNDataPipeTask != nil && lwipTUNDataPipeTask.Running() {
+		lwipTUNDataPipeTask.Stop()
+		<-lwipTUNDataPipeTask.StopChan()
+	}
 	if lwipStack != nil {
 		lwipStack.Close()
 		lwipStack = nil
