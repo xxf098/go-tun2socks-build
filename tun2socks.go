@@ -1124,30 +1124,51 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		// "http":        func() interface{} { return new(conf.HttpClientConfig) },
 		"shadowsocks": func() interface{} { return new(conf.ShadowsocksClientConfig) },
 		"vmess":       func() interface{} { return new(conf.VMessOutboundConfig) },
+		"vless":       func() interface{} { return new(conf.VLessOutboundConfig) },
 		"socks":       func() interface{} { return new(conf.SocksClientConfig) },
 		"mtproto":     func() interface{} { return new(conf.MTProtoClientConfig) },
 		"dns":         func() interface{} { return new(conf.DnsOutboundConfig) },
 	}, "protocol", "settings")
-	if outboundConfig.Protocol != "vmess" {
+	if outboundConfig.Protocol != "vmess" && outboundConfig.Protocol != "vless" {
 		return vmess, err
 	}
 	rawConfig, err := outboundConfigLoader.LoadWithID(settings, outboundConfig.Protocol)
 	if err != nil {
 		return nil, err
 	}
-	vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
-	if !ok {
-		return nil, newError("Not A VMess Config")
+	if outboundConfig.Protocol == "vmess" {
+		vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
+		if !ok {
+			return nil, newError("Not A VMess Config")
+		}
+		for _, vnext := range vmessOutboundConfig.Receivers {
+			vmess.Add = vnext.Address.String()
+			vmess.Port = int(vnext.Port)
+			account := new(conf.VMessAccount)
+			for _, rawUser := range vnext.Users {
+				if err := json.Unmarshal(rawUser, account); err == nil {
+					vmess.ID = account.ID
+					vmess.Aid = int(account.AlterIds)
+					vmess.Security = account.Security
+				}
+			}
+		}
 	}
-	for _, vnext := range vmessOutboundConfig.Receivers {
-		vmess.Add = vnext.Address.String()
-		vmess.Port = int(vnext.Port)
-		account := new(conf.VMessAccount)
-		for _, rawUser := range vnext.Users {
-			if err := json.Unmarshal(rawUser, account); err == nil {
-				vmess.ID = account.ID
-				vmess.Aid = int(account.AlterIds)
-				vmess.Security = account.Security
+	if outboundConfig.Protocol == "vless" {
+		vlessOutboundConfig, ok := rawConfig.(*conf.VLessOutboundConfig)
+		if !ok {
+			return nil, newError("Not A VLess Config")
+		}
+		for _, vnext := range vlessOutboundConfig.Vnext {
+			vmess.Add = vnext.Address.String()
+			vmess.Port = int(vnext.Port)
+			account := new(conf.VMessAccount)
+			for _, rawUser := range vnext.Users {
+				if err := json.Unmarshal(rawUser, account); err == nil {
+					vmess.ID = account.ID
+					vmess.Aid = int(account.AlterIds)
+					vmess.Security = account.Security
+				}
 			}
 		}
 	}
