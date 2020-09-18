@@ -82,3 +82,10 @@ func (t *Task) Err() error {
 	err := t.err.Load()
 	return err.(error)
 }
+
+func CheckAndStop(task *Task) {
+	if task != nil && task.Running() {
+		task.Stop()
+		<-task.StopChan()
+	}
+}

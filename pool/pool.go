@@ -6,7 +6,7 @@ import (
 
 var pool *sync.Pool
 
-const BufSize = 32 * 1024
+const BufSize = 24 * 1024
 
 func NewBytes(size int) []byte {
 	if size <= BufSize {

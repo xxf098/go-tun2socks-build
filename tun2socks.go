@@ -792,15 +792,8 @@ func StartV2RayWithTunFd(
 	})
 	isStopped = false
 
-	if lwipTUNDataPipeTask != nil && lwipTUNDataPipeTask.Running() {
-		lwipTUNDataPipeTask.Stop()
-		<-lwipTUNDataPipeTask.StopChan()
-	}
-
-	if updateStatusPipeTask != nil && updateStatusPipeTask.Running() {
-		updateStatusPipeTask.Stop()
-		<-updateStatusPipeTask.StopChan()
-	}
+	runner.CheckAndStop(lwipTUNDataPipeTask)
+	runner.CheckAndStop(updateStatusPipeTask)
 
 	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
 		// do setup
@@ -901,14 +894,9 @@ func StopV2Ray() {
 	if err != nil {
 		log.Printf("close tun: %v", err)
 	}
-	if updateStatusPipeTask != nil && updateStatusPipeTask.Running() {
-		updateStatusPipeTask.Stop()
-		<-updateStatusPipeTask.StopChan()
-	}
-	if lwipTUNDataPipeTask != nil && lwipTUNDataPipeTask.Running() {
-		lwipTUNDataPipeTask.Stop()
-		<-lwipTUNDataPipeTask.StopChan()
-	}
+	runner.CheckAndStop(updateStatusPipeTask)
+	runner.CheckAndStop(lwipTUNDataPipeTask)
+
 	if lwipStack != nil {
 		lwipStack.Close()
 		lwipStack = nil
