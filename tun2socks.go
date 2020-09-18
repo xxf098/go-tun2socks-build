@@ -802,35 +802,55 @@ func StartV2RayWithTunFd(
 		// }
 		zeroErr := errors.New("nil")
 		maxErrorTimes := 20
-		buf := pool.NewBytes(pool.BufSize)
-		defer pool.FreeBytes(buf)
+		// buf := pool.NewBytes(pool.BufSize)
+		// defer pool.FreeBytes(buf)
 		for {
 			// tun -> lwip
-			nr, er := tunDev.Read(buf)
-			if nr > 0 {
-				nw, ew := lwipWriter.Write(buf[0:nr])
-				if ew != nil {
-					err = ew
-					break
+			err = func() error {
+				buf := pool.NewBytes(pool.BufSize)
+				defer pool.FreeBytes(buf)
+				nr, er := tunDev.Read(buf)
+				if nr > 0 {
+					nw, ew := lwipWriter.Write(buf[0:nr])
+					if ew != nil {
+						return ew
+					}
+					if nr != nw {
+						return errors.New("short write")
+					}
+					// if nw > 0 {
+					// 	written += int64(nw)
+					// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
+					// }
 				}
-				if nr != nw {
-					err = errors.New("short write")
-					break
-				}
-				// if nw > 0 {
-				// 	written += int64(nw)
-				// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
-				// }
-			}
-			if er != nil {
-				if er != io.EOF {
-					err = er
-				}
-				break
-			}
+				return er
+			}()
+			// nr, er := tunDev.Read(buf)
+			// if nr > 0 {
+			// 	nw, ew := lwipWriter.Write(buf[0:nr])
+			// 	if ew != nil {
+			// 		err = ew
+			// 		break
+			// 	}
+			// 	if nr != nw {
+			// 		err = errors.New("short write")
+			// 		break
+			// 	}
+			// 	// if nw > 0 {
+			// 	// 	written += int64(nw)
+			// 	// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
+			// 	// }
+			// }
+			// if er != nil {
+			// 	if er != io.EOF {
+			// 		err = er
+			// 	}
+			// 	break
+			// }
 			if err != nil {
 				maxErrorTimes--
 				logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
+				break
 			}
 			if shouldStop() {
 				logService.WriteLog("got DataPipe stop signal")
