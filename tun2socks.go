@@ -56,6 +56,7 @@ type protocol string
 
 const (
 	VMESS  protocol = protocol("vmess")
+	VLESS  protocol = protocol("vless")
 	TROJAN protocol = protocol("trojan")
 )
 
@@ -802,8 +803,6 @@ func StartV2RayWithTunFd(
 		// }
 		zeroErr := errors.New("nil")
 		maxErrorTimes := 20
-		// buf := pool.NewBytes(pool.BufSize)
-		// defer pool.FreeBytes(buf)
 		for {
 			// tun -> lwip
 			err = func() error {
@@ -825,28 +824,6 @@ func StartV2RayWithTunFd(
 				}
 				return er
 			}()
-			// nr, er := tunDev.Read(buf)
-			// if nr > 0 {
-			// 	nw, ew := lwipWriter.Write(buf[0:nr])
-			// 	if ew != nil {
-			// 		err = ew
-			// 		break
-			// 	}
-			// 	if nr != nw {
-			// 		err = errors.New("short write")
-			// 		break
-			// 	}
-			// 	// if nw > 0 {
-			// 	// 	written += int64(nw)
-			// 	// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
-			// 	// }
-			// }
-			// if er != nil {
-			// 	if er != io.EOF {
-			// 		err = er
-			// 	}
-			// 	break
-			// }
 			if err != nil {
 				maxErrorTimes--
 				logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
@@ -1137,6 +1114,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		return nil, err
 	}
 	if outboundConfig.Protocol == "vmess" {
+		vmess.Protocol = VLESS
 		vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
 		if !ok {
 			return nil, newError("Not A VMess Config")
@@ -1159,6 +1137,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		if !ok {
 			return nil, newError("Not A VLess Config")
 		}
+		vmess.Protocol = VLESS
 		for _, vnext := range vlessOutboundConfig.Vnext {
 			vmess.Add = vnext.Address.String()
 			vmess.Port = int(vnext.Port)
