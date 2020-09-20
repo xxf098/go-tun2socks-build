@@ -1114,7 +1114,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		return nil, err
 	}
 	if outboundConfig.Protocol == "vmess" {
-		vmess.Protocol = VLESS
+		vmess.Protocol = VMESS
 		vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
 		if !ok {
 			return nil, newError("Not A VMess Config")
