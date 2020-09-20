@@ -20,7 +20,7 @@ jobs:
       run: |
         git clone https://github.com/v2fly/v2ray-core
         cd ./v2ray-core
-        git checkout v4.27.0 && cd ..   
+        git checkout v4.28.2 && cd ..
     - name: Setup gomobile
       run: |
         go get golang.org/x/mobile/cmd/gomobile
