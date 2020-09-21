@@ -70,6 +70,7 @@ type VmessOptions struct {
 	RouteMode      int    `json:"routeMode"` // for SSRRAY
 	EnableSniffing bool   `json:"enableSniffing"`
 	DNS            string `json:"dns"` // DNS Config
+	// allowInsecure
 }
 
 type Trojan struct {
@@ -725,7 +726,8 @@ func StartV2RayWithVmess(
 }
 
 func openTunDevice(tunFd int) (*water.Interface, error) {
-	file := os.NewFile(uintptr(tunFd), "tun") // dummy file path name since we already got the fd
+	file := os.NewFile(uintptr(tunFd), "/dev/tun") // dummy file path name since we already got the fd
+	_ = syscall.SetNonblock(tunFd, true)
 	tunDev = &water.Interface{
 		ReadWriteCloser: file,
 	}
@@ -1112,6 +1114,9 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 	rawConfig, err := outboundConfigLoader.LoadWithID(settings, outboundConfig.Protocol)
 	if err != nil {
 		return nil, err
+	}
+	if outboundConfig.StreamSetting != nil {
+		vmess.Net = string(*outboundConfig.StreamSetting.Network)
 	}
 	if outboundConfig.Protocol == "vmess" {
 		vmess.Protocol = VMESS
