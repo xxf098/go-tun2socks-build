@@ -336,7 +336,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 
 	if profile.TLS == "tls" {
 		vmessOutboundDetourConfig.StreamSetting.Security = profile.TLS
-		tlsConfig := &conf.TLSConfig{Insecure: true}
+		tlsConfig := &conf.TLSConfig{Insecure: profile.AllowInsecure}
 		if profile.Host != "" {
 			tlsConfig.ServerName = profile.Host
 		}
