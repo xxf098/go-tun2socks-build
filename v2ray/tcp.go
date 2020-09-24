@@ -11,7 +11,6 @@ import (
 	vnet "v2ray.com/core/common/net"
 	vsession "v2ray.com/core/common/session"
 
-	"github.com/eycorsican/go-tun2socks/common/log"
 	"github.com/eycorsican/go-tun2socks/core"
 	"github.com/xxf098/go-tun2socks-build/pool"
 )
@@ -52,6 +51,5 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		return errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
 	}
 	go h.relay(conn, c)
-	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
