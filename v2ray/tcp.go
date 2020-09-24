@@ -13,6 +13,7 @@ import (
 
 	"github.com/eycorsican/go-tun2socks/common/log"
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/xxf098/go-tun2socks-build/pool"
 )
 
 type tcpHandler struct {
@@ -21,16 +22,18 @@ type tcpHandler struct {
 }
 
 func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
-	closeConn := func() {
+	go func() {
+		buf := pool.NewBytes(pool.BufSize)
+		io.CopyBuffer(rhs, lhs, buf)
+		pool.FreeBytes(buf)
 		lhs.Close()
 		rhs.Close()
-	}
-	go func() {
-		io.Copy(rhs, lhs)
-		closeConn() // Close the conn anyway.
 	}()
-	io.Copy(lhs, rhs)
-	closeConn()
+	buf := pool.NewBytes(pool.BufSize)
+	io.CopyBuffer(lhs, rhs, buf)
+	pool.FreeBytes(buf)
+	lhs.Close()
+	rhs.Close()
 }
 
 func NewTCPHandler(ctx context.Context, instance *vcore.Instance) core.TCPConnHandler {
