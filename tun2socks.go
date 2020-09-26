@@ -728,7 +728,7 @@ func StartV2RayWithVmess(
 }
 
 func openTunDevice(tunFd int) (*water.Interface, error) {
-	file := os.NewFile(uintptr(tunFd), "/dev/tun") // dummy file path name since we already got the fd
+	file := os.NewFile(uintptr(tunFd), "/dev/tun")
 	_ = syscall.SetNonblock(tunFd, true)
 	tunDev = &water.Interface{
 		ReadWriteCloser: file,
@@ -791,11 +791,26 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
+	outputChan := make(chan []byte, 800)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
-		return tunDev.Write(data)
+		buf := pool.NewBytes(pool.BufSize)
+		l := copy(buf, data)
+		outputChan <- buf
+		return l, nil
 	})
 	isStopped = false
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case buf := <-outputChan:
+				tunDev.Write(buf)
+				pool.FreeBytes(buf)
+			}
+		}
+	}(ctx)
 
 	runner.CheckAndStop(lwipTUNDataPipeTask)
 	runner.CheckAndStop(updateStatusPipeTask)
@@ -806,42 +821,43 @@ func StartV2RayWithTunFd(
 		//   // do teardown
 		// }
 		zeroErr := errors.New("nil")
-		maxErrorTimes := 20
-		for {
-			// tun -> lwip
-			err = func() error {
-				buf := pool.NewBytes(pool.BufSize)
-				defer pool.FreeBytes(buf)
-				nr, er := tunDev.Read(buf)
-				if nr > 0 {
-					nw, ew := lwipWriter.Write(buf[0:nr])
-					if ew != nil {
-						return ew
-					}
-					if nr != nw {
-						return errors.New("short write")
-					}
-					// if nw > 0 {
-					// 	written += int64(nw)
-					// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
-					// }
-				}
-				return er
-			}()
-			if err != nil {
-				maxErrorTimes--
-				logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
-				break
-			}
-			if shouldStop() {
-				logService.WriteLog("got DataPipe stop signal")
-				break
-			}
-			if maxErrorTimes <= 0 {
-				logService.WriteLog("lwipTUNDataPipeTask returns due to exceeded error times")
-				return err
-			}
-		}
+		// maxErrorTimes := 20
+		// for {
+		// 	// tun -> lwip
+		// 	err = func() error {
+		// 		buf := pool.NewBytes(pool.BufSize)
+		// 		defer pool.FreeBytes(buf)
+		// 		nr, er := tunDev.Read(buf)
+		// 		if nr > 0 {
+		// 			nw, ew := lwipWriter.Write(buf[0:nr])
+		// 			if ew != nil {
+		// 				return ew
+		// 			}
+		// 			if nr != nw {
+		// 				return errors.New("short write")
+		// 			}
+		// 			// if nw > 0 {
+		// 			// 	written += int64(nw)
+		// 			// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
+		// 			// }
+		// 		}
+		// 		return er
+		// 	}()
+		// 	if err != nil {
+		// 		maxErrorTimes--
+		// 		logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
+		// 		break
+		// 	}
+		// 	if shouldStop() {
+		// 		logService.WriteLog("got DataPipe stop signal")
+		// 		break
+		// 	}
+		// 	if maxErrorTimes <= 0 {
+		// 		logService.WriteLog("lwipTUNDataPipeTask returns due to exceeded error times")
+		// 		return err
+		// 	}
+		// }
+		handlePacket(ctx, tunDev, lwipWriter, shouldStop)
 		return zeroErr // any errors?
 	})
 	updateStatusPipeTask = runner.Go(func(shouldStop runner.S) error {
@@ -865,6 +881,74 @@ func StartV2RayWithTunFd(
 	})
 	logService.WriteLog("V2Ray Started!")
 	return nil
+}
+
+func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Writer, shouldStop runner.S) {
+	inbound := make(chan []byte, 100)
+	outbound := make(chan []byte, 100)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	defer close(outbound)
+
+	// reader
+	go func(ctx context.Context) {
+		defer close(inbound)
+
+		for {
+			buffer := pool.NewBytes(pool.BufSize)
+			n, err := tunDev.Read(buffer)
+			if err != nil {
+				return
+			}
+
+			select {
+			case inbound <- buffer[:n]:
+				break
+			case <-ctx.Done():
+				return
+			default:
+				pool.FreeBytes(buffer[:cap(buffer)])
+			}
+		}
+	}(ctx)
+
+	// writer
+	go func(ctx context.Context) {
+		for {
+			// buffer, ok := <-outbound
+			// if !ok {
+			// 	return
+			// }
+			// _, _ = lwipWriter.Write(buffer)
+			// pool.FreeBytes(buffer)
+			select {
+			case buffer, ok := <-outbound:
+				if !ok {
+					return
+				}
+				_, _ = lwipWriter.Write(buffer)
+				pool.FreeBytes(buffer)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx)
+
+	for {
+		if shouldStop() {
+			return
+		}
+		data, ok := <-inbound
+		if !ok {
+			return
+		}
+		select {
+		case outbound <- data:
+			break
+		default:
+			pool.FreeBytes(data[:cap(data)])
+		}
+	}
 }
 
 func StartTrojan(
