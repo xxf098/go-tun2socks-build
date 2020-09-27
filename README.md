@@ -6,7 +6,7 @@ Building and using `go-tun2socks` for V2Ray on Android. This library is used in 
 
 ## Setup
 
-* install go (only test under version 1.14.2)
+* install go (only test under version 1.15.2)
 * install [gomobile](https://godoc.org/golang.org/x/mobile/cmd/gomobile) and init with `gomobile init -v`
 * install [JDK 8](https://openjdk.java.net/install/) (not jre)
 * Download Android SDK and NDK (only test under SDK 29 and NDK r21b)
