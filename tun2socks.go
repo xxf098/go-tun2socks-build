@@ -576,6 +576,7 @@ func StartV2Ray(
 	packetFlow PacketFlow,
 	vpnService VpnService,
 	logService LogService,
+	querySpeed QuerySpeed,
 	configBytes []byte,
 	assetPath string) error {
 	if packetFlow != nil {
@@ -636,6 +637,9 @@ func StartV2Ray(
 			return len(data), nil
 		})
 
+		statsManager = v.GetFeature(v2stats.ManagerType()).(v2stats.Manager)
+		runner.CheckAndStop(updateStatusPipeTask)
+		updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
 		isStopped = false
 		logService.WriteLog(fmt.Sprintf("V2Ray %s started!", CheckVersion()))
 		return nil
@@ -791,7 +795,7 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
-	outputChan := make(chan []byte, 800)
+	outputChan := make(chan []byte, 888)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
 		buf := pool.NewBytes(pool.BufSize)
@@ -816,47 +820,7 @@ func StartV2RayWithTunFd(
 	runner.CheckAndStop(updateStatusPipeTask)
 
 	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
-		// do setup
-		// defer func(){
-		//   // do teardown
-		// }
 		zeroErr := errors.New("nil")
-		// maxErrorTimes := 20
-		// for {
-		// 	// tun -> lwip
-		// 	err = func() error {
-		// 		buf := pool.NewBytes(pool.BufSize)
-		// 		defer pool.FreeBytes(buf)
-		// 		nr, er := tunDev.Read(buf)
-		// 		if nr > 0 {
-		// 			nw, ew := lwipWriter.Write(buf[0:nr])
-		// 			if ew != nil {
-		// 				return ew
-		// 			}
-		// 			if nr != nw {
-		// 				return errors.New("short write")
-		// 			}
-		// 			// if nw > 0 {
-		// 			// 	written += int64(nw)
-		// 			// 	querySpeed.UpdateUp(QueryOutboundStats("proxy", "uplink"))
-		// 			// }
-		// 		}
-		// 		return er
-		// 	}()
-		// 	if err != nil {
-		// 		maxErrorTimes--
-		// 		logService.WriteLog(fmt.Sprintf("copying data failed: %v", err))
-		// 		break
-		// 	}
-		// 	if shouldStop() {
-		// 		logService.WriteLog("got DataPipe stop signal")
-		// 		break
-		// 	}
-		// 	if maxErrorTimes <= 0 {
-		// 		logService.WriteLog("lwipTUNDataPipeTask returns due to exceeded error times")
-		// 		return err
-		// 	}
-		// }
 		handlePacket(ctx, tunDev, lwipWriter, shouldStop)
 		return zeroErr // any errors?
 	})
@@ -949,6 +913,28 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 			pool.FreeBytes(data[:cap(data)])
 		}
 	}
+}
+
+func createUpdateStatusPipeTask(querySpeed QuerySpeed) *runner.Task {
+	return runner.Go(func(shouldStop runner.S) error {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		zeroErr := errors.New("nil")
+		for {
+			if shouldStop() {
+				break
+			}
+			select {
+			case <-ticker.C:
+				up := QueryOutboundStats("proxy", "uplink")
+				down := QueryOutboundStats("proxy", "downlink")
+				querySpeed.UpdateTraffic(up, down)
+				// case <-lwipTUNDataPipeTask.StopChan():
+				// 	return errors.New("stopped")
+			}
+		}
+		return zeroErr
+	})
 }
 
 func StartTrojan(
