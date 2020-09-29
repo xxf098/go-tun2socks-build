@@ -15,6 +15,7 @@ import (
 
 	"github.com/eycorsican/go-tun2socks/common/log"
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/xxf098/go-tun2socks-build/pool"
 )
 
 type udpConnEntry struct {
@@ -47,8 +48,8 @@ func (h *udpHandler) fetchInput(conn core.UDPConn) {
 		return
 	}
 
-	buf := core.NewBytes(core.BufSize)
-	defer core.FreeBytes(buf)
+	buf := pool.NewBytes(pool.BufSize)
+	defer pool.FreeBytes(buf)
 
 	for {
 		n, _, err := c.conn.ReadFrom(buf)
@@ -123,7 +124,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 		return nil
 	} else {
 		h.Close(conn)
-		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), c.target))
+		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
 	}
 }
 
