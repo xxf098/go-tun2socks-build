@@ -161,6 +161,7 @@ func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
 	sid := vsession.NewID()
 	ctx := vsession.ContextWithID(context.Background(), sid)
 	conn, err := vcore.Dial(ctx, v, dest)
+	defer conn.Close()
 	if err != nil {
 		return 0, errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
 	}
