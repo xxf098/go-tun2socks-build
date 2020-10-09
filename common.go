@@ -348,19 +348,40 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 
 func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	config := profile.Trojan
+	// outboundsSettings, _ := json.Marshal(trojan.OutboundsSettings{
+	// 	Address:    config.Add,
+	// 	Password:   config.Password,
+	// 	Port:       config.Port,
+	// 	ServerName: config.SNI,
+	// 	SkipVerify: config.SkipCertVerify,
+	// })
 	outboundsSettings, _ := json.Marshal(trojan.OutboundsSettings{
-		Address:    config.Add,
-		Password:   config.Password,
-		Port:       config.Port,
-		ServerName: config.SNI,
-		SkipVerify: config.SkipCertVerify,
+		Servers: []*trojan.TrojanServerTarget{
+			&trojan.TrojanServerTarget{
+				Address:  config.Add,
+				Email:    "xxf098@github.com",
+				Level:    8,
+				Password: config.Password,
+				Port:     uint16(config.Port),
+			},
+		},
 	})
 	outboundsSettingsMsg := json.RawMessage(outboundsSettings)
-	return conf.OutboundDetourConfig{
+	transportProtocol := conf.TransportProtocol("tcp")
+	trojanOutboundDetourConfig := conf.OutboundDetourConfig{
 		Protocol: "trojan",
 		Tag:      "proxy",
 		Settings: &outboundsSettingsMsg,
+		StreamSetting: &conf.StreamConfig{
+			Security: "tls",
+			Network:  &transportProtocol,
+			TLSSettings: &conf.TLSConfig{
+				Insecure:   config.SkipCertVerify,
+				ServerName: config.SNI,
+			},
+		},
 	}
+	return trojanOutboundDetourConfig
 }
 
 func createFreedomOutboundDetourConfig(useIPv6 bool) conf.OutboundDetourConfig {

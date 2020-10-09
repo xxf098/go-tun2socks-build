@@ -1,9 +1,13 @@
 package trojan
 
+type TrojanServerTarget struct {
+	Address  string `json:"address"`
+	Port     uint16 `json:"port"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Level    byte   `json:"level"`
+}
+
 type OutboundsSettings struct {
-	Address    string `json:"address"`
-	Port       int    `json:"port"`
-	Password   string `json:"password"`
-	ServerName string `json:"serverName"` // sni
-	SkipVerify bool `json:"skipVerify"`
+	Servers []*TrojanServerTarget `json:"servers"`
 }
