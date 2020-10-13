@@ -961,9 +961,11 @@ func StartTrojanTunFd(
 // StopV2Ray stop v2ray
 func StopV2Ray() {
 	isStopped = true
-	err := tunDev.Close()
-	if err != nil {
-		log.Printf("close tun: %v", err)
+	if tunDev != nil {
+		err := tunDev.Close()
+		if err != nil {
+			log.Printf("close tun: %v", err)
+		}
 	}
 	runner.CheckAndStop(updateStatusPipeTask)
 	runner.CheckAndStop(lwipTUNDataPipeTask)
