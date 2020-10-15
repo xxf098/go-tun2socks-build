@@ -71,6 +71,7 @@ type VmessOptions struct {
 	EnableSniffing bool   `json:"enableSniffing"`
 	DNS            string `json:"dns"` // DNS Config
 	AllowInsecure  bool   `json:"allowInsecure"`
+	Mux            int    `json:"mux"`
 }
 
 type Trojan struct {
@@ -87,12 +88,17 @@ func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify
 	err := json.Unmarshal(opt, &options)
 	if err != nil {
 		options = VmessOptions{
-			UseIPv6:       false,
-			Loglevel:      "error",
-			RouteMode:     0,
-			DNS:           "1.1.1.1:53,223.5.5.5:53",
-			AllowInsecure: false,
+			UseIPv6:        false,
+			Loglevel:       "error",
+			RouteMode:      0,
+			EnableSniffing: true,
+			DNS:            "1.1.1.1:53,223.5.5.5:53",
+			AllowInsecure:  true,
+			Mux:            -1,
 		}
+	}
+	if options.Mux < 1 {
+		options.Mux = -1
 	}
 	return &Trojan{
 		Add:            Add,
@@ -135,12 +141,17 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 	err := json.Unmarshal(opt, &options)
 	if err != nil {
 		options = VmessOptions{
-			UseIPv6:       false,
-			Loglevel:      "error",
-			RouteMode:     0,
-			DNS:           "1.1.1.1:53,223.5.5.5:53",
-			AllowInsecure: true,
+			UseIPv6:        false,
+			Loglevel:       "error",
+			RouteMode:      0,
+			EnableSniffing: true,
+			DNS:            "1.1.1.1:53,223.5.5.5:53",
+			AllowInsecure:  true,
+			Mux:            -1,
 		}
+	}
+	if options.Mux < 1 {
+		options.Mux = -1
 	}
 	return &Vmess{
 		Host:         Host,

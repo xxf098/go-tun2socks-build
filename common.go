@@ -234,10 +234,14 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		},
 	})
 	outboundsSettingsMsg1 := json.RawMessage(outboundsSettings1)
+	muxEnabled := false
+	if profile.VmessOptions.Mux > 0 {
+		muxEnabled = true
+	}
 	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
 		Protocol:      "vmess",
 		Tag:           "proxy",
-		MuxSettings:   &conf.MuxConfig{Enabled: true, Concurrency: 16},
+		MuxSettings:   &conf.MuxConfig{Enabled: muxEnabled, Concurrency: int16(profile.VmessOptions.Mux)},
 		Settings:      &outboundsSettingsMsg1,
 		StreamSetting: &conf.StreamConfig{},
 	}
