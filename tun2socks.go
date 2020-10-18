@@ -872,7 +872,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 		for {
 			buffer := pool.NewBytes(pool.BufSize)
 			n, err := tunDev.Read(buffer)
-			if err != nil {
+			if err != nil && err != io.EOF {
 				return
 			}
 

@@ -130,13 +130,14 @@ func testLatencyWithSocks5(ip string, port uint32) (int64, error) {
 	return elapsed.Milliseconds(), nil
 }
 
+// TODO: refactor
 func send204Request(conn *net.Conn, timeout time.Duration) error {
 	err = (*conn).SetDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return err
 	}
 	remoteHost := "clients3.google.com"
-	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nCache-Control: max-age=60\r\n\r\n", remoteHost)
+	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
 	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
 		return err
 	}
