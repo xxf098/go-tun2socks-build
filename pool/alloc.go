@@ -22,7 +22,7 @@ type Allocator struct {
 // no more than 50%.
 func NewAllocator() *Allocator {
 	alloc := new(Allocator)
-	alloc.buffers = make([]sync.Pool, 17) // 1B -> 64K
+	alloc.buffers = make([]sync.Pool, 16) // 1B -> 64K
 	for k := range alloc.buffers {
 		i := k
 		alloc.buffers[k].New = func() interface{} {

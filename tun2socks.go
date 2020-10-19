@@ -809,7 +809,7 @@ func StartV2RayWithTunFd(
 	outputChan := make(chan []byte, 888)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
-		buf := pool.NewBytes(pool.BufSize)
+		buf := pool.NewBytes(len(data))
 		l := copy(buf, data)
 		outputChan <- buf
 		return l, nil
