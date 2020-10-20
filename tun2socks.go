@@ -809,7 +809,7 @@ func StartV2RayWithTunFd(
 	outputChan := make(chan []byte, 888)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
-		buf := pool.NewBytes(len(data))
+		buf := vbytespool.Alloc(int32(len(data)))
 		l := copy(buf, data)
 		outputChan <- buf
 		return l, nil
@@ -822,7 +822,7 @@ func StartV2RayWithTunFd(
 				return
 			case buf := <-outputChan:
 				tunDev.Write(buf)
-				pool.FreeBytes(buf)
+				vbytespool.Free(buf)
 			}
 		}
 	}(ctx)
@@ -870,7 +870,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 		defer close(inbound)
 
 		for {
-			buffer := pool.NewBytes(pool.BufSize)
+			buffer := vbytespool.Alloc(pool.BufSize)
 			n, err := tunDev.Read(buffer)
 			if err != nil && err != io.EOF {
 				return
@@ -882,7 +882,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 			case <-ctx.Done():
 				return
 			default:
-				pool.FreeBytes(buffer[:cap(buffer)])
+				vbytespool.Free(buffer[:cap(buffer)])
 			}
 		}
 	}(ctx)
@@ -902,7 +902,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 					return
 				}
 				_, _ = lwipWriter.Write(buffer)
-				pool.FreeBytes(buffer)
+				vbytespool.Free(buffer)
 			case <-ctx.Done():
 				return
 			}
@@ -921,7 +921,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 		case outbound <- data:
 			break
 		default:
-			pool.FreeBytes(data[:cap(data)])
+			vbytespool.Free(data[:cap(data)])
 		}
 	}
 }
