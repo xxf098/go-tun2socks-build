@@ -34,6 +34,11 @@ const (
 	AddrTypeFQDN          = 0x03
 	AddrTypeIPv6          = 0x04
 	StatusSucceeded       = 0x00
+	defaultReadBufferSize = 4096
+)
+
+var (
+	strHTTP11 = []byte("HTTP/1.1")
 )
 
 func testLatency(url string) (int64, error) {
@@ -153,6 +158,94 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 	return nil
 }
 
+func sendCode204Request(conn *net.Conn, timeout time.Duration) error {
+	err = (*conn).SetDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return err
+	}
+	remoteHost := "clients3.google.com"
+	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
+	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
+		return err
+	}
+	buf := make([]byte, 128)
+	_, err := (*conn).Read(buf)
+	if err != nil && err != io.EOF {
+		return err
+	}
+	_, err = parseFirstLine(buf)
+	return err
+}
+
+func parseFirstLine(buf []byte) (int, error) {
+	bNext := buf
+	var b []byte
+	var err error
+	for len(b) == 0 {
+		if b, bNext, err = nextLine(bNext); err != nil {
+			return 0, err
+		}
+	}
+
+	// parse protocol
+	n := bytes.IndexByte(b, ' ')
+	if n < 0 {
+		return 0, fmt.Errorf("cannot find whitespace in the first line of response %q", buf)
+	}
+	b = b[n+1:]
+
+	// parse status code
+	statusCode, n, err := parseUintBuf(b)
+	if err != nil {
+		return 0, fmt.Errorf("cannot parse response status code: %s. Response %q", err, buf)
+	}
+	if len(b) > n && b[n] != ' ' {
+		return 0, fmt.Errorf("unexpected char at the end of status code. Response %q", buf)
+	}
+
+	if statusCode == 204 || statusCode == 200 {
+		return len(buf) - len(bNext), nil
+	}
+	return 0, errors.New("Wrong Status Code")
+}
+
+func nextLine(b []byte) ([]byte, []byte, error) {
+	nNext := bytes.IndexByte(b, '\n')
+	if nNext < 0 {
+		return nil, nil, errors.New("need more data: cannot find trailing lf")
+	}
+	n := nNext
+	if n > 0 && b[n-1] == '\r' {
+		n--
+	}
+	return b[:n], b[nNext+1:], nil
+}
+
+func parseUintBuf(b []byte) (int, int, error) {
+	n := len(b)
+	if n == 0 {
+		return -1, 0, errors.New("empty integer")
+	}
+	v := 0
+	for i := 0; i < n; i++ {
+		c := b[i]
+		k := c - '0'
+		if k > 9 {
+			if i == 0 {
+				return -1, i, errors.New("unexpected first char found. Expecting 0-9")
+			}
+			return v, i, nil
+		}
+		vNew := 10*v + int(k)
+		// Test for overflow.
+		if vNew < v {
+			return -1, i, errors.New("too long int")
+		}
+		v = vNew
+	}
+	return v, n, nil
+}
+
 func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
 	dest := vnet.Destination{
 		Address: vnet.DomainAddress("clients3.google.com"),
@@ -166,12 +259,12 @@ func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
-	if err = send204Request(&conn, 2*time.Second); err != nil {
+	if err = sendCode204Request(&conn, 2*time.Second); err != nil {
 		return 0, err
 	}
 	// timeout then retry
 	start := time.Now()
-	if err = send204Request(&conn, 1280*time.Millisecond); err != nil {
+	if err = sendCode204Request(&conn, 1280*time.Millisecond); err != nil {
 		return 0, err
 	}
 	elapsed := time.Since(start)
@@ -544,7 +637,7 @@ func creatPolicyConfig() *conf.PolicyConfig {
 }
 
 // remove https://github.com/v2ray/v2ray-core/blob/02b658cd2beb5968818c7ed37388fb348b9b9cb9/app/dns/server.go#L362
-func createDNSConfig(routeMode int, dnsConf string) *conf.DnsConfig {
+func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 	// nameServerConfig := []*conf.NameServerConfig{
 	// 	&conf.NameServerConfig{
 	// 		Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
@@ -578,7 +671,7 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DnsConfig {
 		nameServerConfig = append(nameServerConfig, newConfig)
 		// }
 	}
-	return &conf.DnsConfig{
+	return &conf.DNSConfig{
 		Hosts:   v2ray.BlockHosts,
 		Servers: nameServerConfig,
 	}

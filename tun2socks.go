@@ -498,7 +498,7 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 	jsonConfig.LogConfig = &conf.LogConfig{
 		LogLevel: profile.Loglevel,
 	}
-	jsonConfig.DNSConfig = &conf.DnsConfig{
+	jsonConfig.DNSConfig = &conf.DNSConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{
 				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
@@ -1191,7 +1191,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		"vless":       func() interface{} { return new(conf.VLessOutboundConfig) },
 		"socks":       func() interface{} { return new(conf.SocksClientConfig) },
 		"mtproto":     func() interface{} { return new(conf.MTProtoClientConfig) },
-		"dns":         func() interface{} { return new(conf.DnsOutboundConfig) },
+		"dns":         func() interface{} { return new(conf.DNSOutboundConfig) },
 	}, "protocol", "settings")
 	if outboundConfig.Protocol != "vmess" && outboundConfig.Protocol != "vless" {
 		return vmess, err
