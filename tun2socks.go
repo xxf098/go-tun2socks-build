@@ -806,7 +806,7 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
-	outputChan := make(chan []byte, 888)
+	outputChan := make(chan []byte, 1000)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
 		buf := vbytespool.Alloc(int32(len(data)))
@@ -859,33 +859,33 @@ func StartV2RayWithTunFd(
 }
 
 func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Writer, shouldStop runner.S) {
-	inbound := make(chan []byte, 100)
-	outbound := make(chan []byte, 100)
+	// inbound := make(chan []byte, 100)
+	outbound := make(chan []byte, 1000)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	defer close(outbound)
 
 	// reader
-	go func(ctx context.Context) {
-		defer close(inbound)
+	// go func(ctx context.Context) {
+	// 	defer close(inbound)
 
-		for {
-			buffer := vbytespool.Alloc(pool.BufSize)
-			n, err := tunDev.Read(buffer)
-			if err != nil && err != io.EOF {
-				return
-			}
+	// 	for {
+	// 		buffer := vbytespool.Alloc(pool.BufSize)
+	// 		n, err := tunDev.Read(buffer)
+	// 		if err != nil && err != io.EOF {
+	// 			return
+	// 		}
 
-			select {
-			case inbound <- buffer[:n]:
-				break
-			case <-ctx.Done():
-				return
-			default:
-				vbytespool.Free(buffer[:cap(buffer)])
-			}
-		}
-	}(ctx)
+	// 		select {
+	// 		case inbound <- buffer[:n]:
+	// 			break
+	// 		case <-ctx.Done():
+	// 			return
+	// 		default:
+	// 			vbytespool.Free(buffer[:cap(buffer)])
+	// 		}
+	// 	}
+	// }(ctx)
 
 	// writer
 	go func(ctx context.Context) {
@@ -913,13 +913,16 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 		if shouldStop() {
 			return
 		}
-		data, ok := <-inbound
-		if !ok {
+		data := vbytespool.Alloc(pool.BufSize)
+		n, err := tunDev.Read(data)
+		if err != nil && err != io.EOF {
 			return
 		}
 		select {
-		case outbound <- data:
+		case outbound <- data[:n]:
 			break
+		case <-ctx.Done():
+			return
 		default:
 			vbytespool.Free(data[:cap(data)])
 		}
