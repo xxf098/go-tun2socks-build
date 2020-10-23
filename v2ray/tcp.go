@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -49,7 +48,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	ctx := vsession.ContextWithID(h.ctx, sid)
 	c, err := vcore.Dial(ctx, h.v, dest)
 	if err != nil {
-		return errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
+		return fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
 	go h.relay(conn, c)
 	return nil

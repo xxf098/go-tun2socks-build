@@ -87,7 +87,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	ctx, cancel := context.WithCancel(ctx)
 	pc, err := vcore.DialUDP(ctx, h.v)
 	if err != nil {
-		return errors.New(fmt.Sprintf("dial V proxy connection failed: %v", err))
+		return fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
 	timer := vsignal.CancelAfterInactivity(ctx, cancel, h.timeout)
 	h.Lock()
@@ -120,12 +120,12 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 		c.updater.Update()
 		if err != nil {
 			h.Close(conn)
-			return errors.New(fmt.Sprintf("write remote failed: %v", err))
+			return fmt.Errorf("write remote failed: %v", err)
 		}
 		return nil
 	} else {
 		h.Close(conn)
-		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
+		return fmt.Errorf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr)
 	}
 }
 
