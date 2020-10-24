@@ -33,8 +33,8 @@ func OpenTunDevice(tunFd int) (*Interface, error) {
 	tunDev := &Interface{
 		ReadWriteCloser: file,
 		StopCh:          make(chan bool, 2),
-		WriteCh:         make(chan []byte, 1200),
-		ReadCh:          make(chan []byte, 1200),
+		WriteCh:         make(chan []byte, 1800),
+		ReadCh:          make(chan []byte, 1800),
 	}
 	return tunDev, nil
 }

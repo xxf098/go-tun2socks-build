@@ -28,7 +28,6 @@ import (
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
-	"github.com/songgao/water"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/runner"
@@ -42,7 +41,7 @@ var v *vcore.Instance
 var mtuUsed int
 var lwipTUNDataPipeTask *runner.Task
 var updateStatusPipeTask *runner.Task
-var tunDev *water.Interface
+var tunDev *pool.Interface
 var lwipWriter io.Writer
 var statsManager v2stats.Manager
 var isStopped = false
@@ -742,15 +741,6 @@ func StartV2RayWithVmess(
 	return errors.New("packetFlow is null")
 }
 
-func openTunDevice(tunFd int) (*water.Interface, error) {
-	file := os.NewFile(uintptr(tunFd), "/dev/tun")
-	_ = syscall.SetNonblock(tunFd, true)
-	tunDev = &water.Interface{
-		ReadWriteCloser: file,
-	}
-	return tunDev, nil
-}
-
 // TODO: support ipv6
 func StartV2RayWithTunFd(
 	tunFd int,
@@ -759,7 +749,7 @@ func StartV2RayWithTunFd(
 	querySpeed QuerySpeed,
 	profile *Vmess,
 	assetPath string) error {
-	tunDev, err = openTunDevice(tunFd)
+	tunDev, err = pool.OpenTunDevice(tunFd)
 	if err != nil {
 		log.Fatalf("failed to open tun device: %v", err)
 	}
@@ -806,27 +796,9 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
-	outputChan := make(chan []byte, 1000)
-	core.RegisterOutputFn(func(data []byte) (int, error) {
-		// querySpeed.UpdateDown(QueryOutboundStats("proxy", "downlink"))
-		buf := vbytespool.Alloc(int32(len(data)))
-		l := copy(buf, data)
-		outputChan <- buf
-		return l, nil
-	})
+	// core.RegisterOutputFn(tunDev.HandleOuput)
+	core.RegisterOutputCh(tunDev.WriteCh)
 	isStopped = false
-	go func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case buf := <-outputChan:
-				tunDev.Write(buf)
-				vbytespool.Free(buf)
-			}
-		}
-	}(ctx)
-
 	runner.CheckAndStop(lwipTUNDataPipeTask)
 	runner.CheckAndStop(updateStatusPipeTask)
 
@@ -858,46 +830,18 @@ func StartV2RayWithTunFd(
 	return nil
 }
 
-func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Writer, shouldStop runner.S) {
+func handlePacket(ctx context.Context, tunDev *pool.Interface, lwipWriter io.Writer, shouldStop runner.S) {
 	// inbound := make(chan []byte, 100)
-	outbound := make(chan []byte, 1000)
+	// outbound := make(chan []byte, 1000)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	defer close(outbound)
-
-	// reader
-	// go func(ctx context.Context) {
-	// 	defer close(inbound)
-
-	// 	for {
-	// 		buffer := vbytespool.Alloc(pool.BufSize)
-	// 		n, err := tunDev.Read(buffer)
-	// 		if err != nil && err != io.EOF {
-	// 			return
-	// 		}
-
-	// 		select {
-	// 		case inbound <- buffer[:n]:
-	// 			break
-	// 		case <-ctx.Done():
-	// 			return
-	// 		default:
-	// 			vbytespool.Free(buffer[:cap(buffer)])
-	// 		}
-	// 	}
-	// }(ctx)
+	// defer close(outbound)
 
 	// writer
 	go func(ctx context.Context) {
 		for {
-			// buffer, ok := <-outbound
-			// if !ok {
-			// 	return
-			// }
-			// _, _ = lwipWriter.Write(buffer)
-			// pool.FreeBytes(buffer)
 			select {
-			case buffer, ok := <-outbound:
+			case buffer, ok := <-tunDev.ReadCh:
 				if !ok {
 					return
 				}
@@ -908,25 +852,7 @@ func handlePacket(ctx context.Context, tunDev *water.Interface, lwipWriter io.Wr
 			}
 		}
 	}(ctx)
-
-	for {
-		if shouldStop() {
-			return
-		}
-		data := vbytespool.Alloc(pool.BufSize)
-		n, err := tunDev.Read(data)
-		if err != nil && err != io.EOF {
-			return
-		}
-		select {
-		case outbound <- data[:n]:
-			break
-		case <-ctx.Done():
-			return
-		default:
-			vbytespool.Free(data[:cap(data)])
-		}
-	}
+	tunDev.Run(ctx)
 }
 
 func createUpdateStatusPipeTask(querySpeed QuerySpeed) *runner.Task {
@@ -976,10 +902,7 @@ func StartTrojanTunFd(
 func StopV2Ray() {
 	isStopped = true
 	if tunDev != nil {
-		err := tunDev.Close()
-		if err != nil {
-			log.Printf("close tun: %v", err)
-		}
+		tunDev.Stop()
 	}
 	runner.CheckAndStop(updateStatusPipeTask)
 	runner.CheckAndStop(lwipTUNDataPipeTask)
