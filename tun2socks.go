@@ -71,6 +71,7 @@ type VmessOptions struct {
 	DNS            string `json:"dns"` // DNS Config
 	AllowInsecure  bool   `json:"allowInsecure"`
 	Mux            int    `json:"mux"`
+	LocalPort      int    `json:"localPort"`
 }
 
 type Trojan struct {
@@ -796,8 +797,8 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
-	// core.RegisterOutputFn(tunDev.HandleOuput)
-	core.RegisterOutputCh(tunDev.WriteCh)
+	core.RegisterOutputFn(tunDev.HandleOuput)
+	// core.RegisterOutputCh(tunDev.WriteCh)
 	isStopped = false
 	runner.CheckAndStop(lwipTUNDataPipeTask)
 	runner.CheckAndStop(updateStatusPipeTask)
