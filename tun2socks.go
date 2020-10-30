@@ -797,12 +797,24 @@ func StartV2RayWithTunFd(
 	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
 
 	// Write IP packets back to TUN.
+	output := make(chan []byte, 2400)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		buf := vbytespool.Alloc(int32(len(data)))
 		l := copy(buf, data)
-		tunDev.WriteCh <- buf
+		output <- buf
 		return l, nil
 	})
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case buf := <-output:
+				tunDev.Write(buf)
+				vbytespool.Free(buf)
+			}
+		}
+	}(ctx)
 	// core.RegisterOutputCh(tunDev.WriteCh)
 	isStopped = false
 	runner.CheckAndStop(lwipTUNDataPipeTask)

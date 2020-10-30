@@ -15,16 +15,8 @@ const MTU = 2 * 1024
 
 type Interface struct {
 	io.ReadWriteCloser
-	WriteCh chan []byte
-	ReadCh  chan []byte
-	StopCh  chan bool
-}
-
-func (tunDev *Interface) HandleOuput(data []byte) (int, error) {
-	buf := vbytespool.Alloc(int32(len(data)))
-	l := copy(buf, data)
-	tunDev.WriteCh <- buf
-	return l, nil
+	ReadCh chan []byte
+	StopCh chan bool
 }
 
 func OpenTunDevice(tunFd int) (*Interface, error) {
@@ -33,27 +25,12 @@ func OpenTunDevice(tunFd int) (*Interface, error) {
 	tunDev := &Interface{
 		ReadWriteCloser: file,
 		StopCh:          make(chan bool, 2),
-		WriteCh:         make(chan []byte, 1800),
-		ReadCh:          make(chan []byte, 1800),
+		ReadCh:          make(chan []byte, 2000),
 	}
 	return tunDev, nil
 }
 
 func (tunDev *Interface) Run(ctx context.Context) {
-	// writer
-	go func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tunDev.StopCh:
-				return
-			case buf := <-tunDev.WriteCh:
-				tunDev.Write(buf)
-				vbytespool.Free(buf)
-			}
-		}
-	}(ctx)
 	// reader
 	for {
 		data := vbytespool.Alloc(MTU)
