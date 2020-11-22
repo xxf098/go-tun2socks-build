@@ -159,13 +159,14 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 }
 
 func sendCode204Request(conn *net.Conn, timeout time.Duration) error {
-	err = (*conn).SetDeadline(time.Now().Add(timeout))
+	err = (*conn).SetReadDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return err
 	}
 	remoteHost := "clients3.google.com"
-	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
-	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
+	// httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
+	httpRequest := "GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n"
+	if _, err = fmt.Fprintf(*conn, httpRequest, remoteHost); err != nil {
 		return err
 	}
 	buf := make([]byte, 128)
@@ -259,12 +260,13 @@ func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
-	if err = sendCode204Request(&conn, 2*time.Second); err != nil {
-		return 0, err
+	timeout := 1235 * time.Millisecond
+	if err = sendCode204Request(&conn, timeout); err != nil {
+		timeout = 2358 * time.Millisecond
 	}
 	// timeout then retry
 	start := time.Now()
-	if err = sendCode204Request(&conn, 1280*time.Millisecond); err != nil {
+	if err = sendCode204Request(&conn, timeout); err != nil {
 		return 0, err
 	}
 	elapsed := time.Since(start)
