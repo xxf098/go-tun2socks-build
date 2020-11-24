@@ -16,6 +16,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	vcore "v2ray.com/core"
+	vproxyman "v2ray.com/core/app/proxyman"
 	verrors "v2ray.com/core/common/errors"
 	vnet "v2ray.com/core/common/net"
 	vsession "v2ray.com/core/common/session"
@@ -731,4 +732,17 @@ func DecodeJSONConfig(reader io.Reader) (*conf.Config, error) {
 	}
 
 	return jsonConfig, nil
+}
+
+// ContextWithSniffingConfig is a wrapper of session.ContextWithContent.
+// Deprecated. Use session.ContextWithContent directly.
+func contextWithSniffingConfig(ctx context.Context, c *vproxyman.SniffingConfig) context.Context {
+	content := vsession.ContentFromContext(ctx)
+	if content == nil {
+		content = new(vsession.Content)
+		ctx = vsession.ContextWithContent(ctx, content)
+	}
+	content.SniffingRequest.Enabled = c.Enabled
+	content.SniffingRequest.OverrideDestinationForProtocol = c.DestinationOverride
+	return ctx
 }

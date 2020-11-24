@@ -631,7 +631,7 @@ func StartV2Ray(
 			Enabled:             true,
 			DestinationOverride: strings.Split("tls,http", ","),
 		}
-		ctx := vproxyman.ContextWithSniffingConfig(context.Background(), sniffingConfig)
+		ctx := contextWithSniffingConfig(context.Background(), sniffingConfig)
 
 		// Register tun2socks connection handlers.
 		// vhandler := v2ray.NewHandler(ctx, v)
@@ -721,7 +721,7 @@ func StartV2RayWithVmess(
 				Enabled:             true,
 				DestinationOverride: strings.Split("tls,http", ","),
 			}
-			ctx = vproxyman.ContextWithSniffingConfig(ctx, sniffingConfig)
+			ctx = contextWithSniffingConfig(ctx, sniffingConfig)
 		}
 		// Register tun2socks connection handlers.
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
@@ -790,7 +790,7 @@ func StartV2RayWithTunFd(
 			Enabled:             true,
 			DestinationOverride: strings.Split("tls,http", ","),
 		}
-		ctx = vproxyman.ContextWithSniffingConfig(ctx, sniffingConfig)
+		ctx = contextWithSniffingConfig(ctx, sniffingConfig)
 	}
 	// Register tun2socks connection handlers.
 	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
