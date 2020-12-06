@@ -799,10 +799,10 @@ func StartV2RayWithTunFd(
 	// Write IP packets back to TUN.
 	output := make(chan []byte, 2400)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
-		buf := vbytespool.Alloc(int32(len(data)))
-		l := copy(buf, data)
-		output <- buf
-		return l, nil
+		// buf := vbytespool.Alloc(int32(len(data)))
+		// l := copy(buf, data)
+		output <- data
+		return len(data), nil
 	})
 	go func(ctx context.Context) {
 		for {
@@ -811,7 +811,7 @@ func StartV2RayWithTunFd(
 				return
 			case buf := <-output:
 				tunDev.Write(buf)
-				vbytespool.Free(buf)
+				// vbytespool.Free(buf)
 			}
 		}
 	}(ctx)
@@ -933,8 +933,10 @@ func StopV2Ray() {
 		statsManager.Close()
 		statsManager = nil
 	}
-	v.Close()
-	v = nil
+	if v != nil {
+		v.Close()
+		v = nil
+	}
 }
 
 // ~/go/src/v2ray.com/core/proxy/vmess/outbound/outbound.go
