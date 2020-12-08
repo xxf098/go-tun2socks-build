@@ -3,59 +3,58 @@ name: build
 on:
   push:
     branches:
-      - 'master'
+      - "master"
 
 jobs:
   build:
-
     runs-on: ubuntu-18.04
-  
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup golang
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.15.2'
-    - name: Clone v2ray-core
-      run: |
-        git clone https://github.com/v2fly/v2ray-core
-        cd ./v2ray-core
-        git checkout v4.31.2 && cd ..
-    - name: Setup gomobile
-      run: |
-        go get golang.org/x/mobile/cmd/gomobile
-        gomobile init -v
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Cache Data
-      uses: actions/cache@v1
-      env:
-        ndk: android-ndk-r20b
-        sdk-tools: 4333796
-      with:
-        path: ~/.android-cache
-        key: ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}
-        restore-keys: |
-          ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}           
-    - name: Setup Android
-      run: |
-        wget "https://raw.githubusercontent.com/xxf098/shadowsocksr-v2ray-android/efbb4f034ac95eec2affc38f97681a23ec4a42e6/travis-ci/setup.sh" -O setup.sh
-        sed -i 's/r12b/r20b/g' setup.sh && sed -i '41,48d' setup.sh && chmod +x setup.sh
-        ./setup.sh
-    - name: Build AAR
-      run: |
-        go get -d ./...
-        make android
-    - name: Upload AAR
-      uses: actions/upload-artifact@v1
-      with:
-        name: v2raylib
-        path: build/tun2socks.aar
-    - name: Check Build
-      run: |
-        go version
-        java -version
-        ls "$ANDROID_HOME"
-        ls -thla ./build
+      - uses: actions/checkout@v2
+      - name: Setup golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.15.2"
+      - name: Clone v2ray-core
+        run: |
+          git clone https://github.com/v2fly/v2ray-core
+          cd ./v2ray-core
+          git checkout v4.33.0 && cd ..
+      - name: Setup gomobile
+        run: |
+          go get golang.org/x/mobile/cmd/gomobile
+          gomobile init -v
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Cache Data
+        uses: actions/cache@v1
+        env:
+          ndk: android-ndk-r20b
+          sdk-tools: 4333796
+        with:
+          path: ~/.android-cache
+          key: ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}
+          restore-keys: |
+            ${{ runner.os }}-android-${{ env.ndk-version }}-${{ env.sdk-tools }}
+      - name: Setup Android
+        run: |
+          wget "https://raw.githubusercontent.com/xxf098/shadowsocksr-v2ray-android/efbb4f034ac95eec2affc38f97681a23ec4a42e6/travis-ci/setup.sh" -O setup.sh
+          sed -i 's/r12b/r20b/g' setup.sh && sed -i '41,48d' setup.sh && chmod +x setup.sh
+          ./setup.sh
+      - name: Build AAR
+        run: |
+          go get -d ./...
+          make android
+      - name: Upload AAR
+        uses: actions/upload-artifact@v1
+        with:
+          name: v2raylib
+          path: build/tun2socks.aar
+      - name: Check Build
+        run: |
+          go version
+          java -version
+          ls "$ANDROID_HOME"
+          ls -thla ./build
