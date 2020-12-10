@@ -566,6 +566,10 @@ type QuerySpeed interface {
 	UpdateTraffic(up int64, down int64)
 }
 
+type TestLatency interface {
+	UpdateLatency(id int, elapsed int64)
+}
+
 // SetNonblock puts the fd in blocking or non-blocking mode.
 func SetNonblock(fd int, nonblocking bool) bool {
 	err := syscall.SetNonblock(fd, nonblocking)
