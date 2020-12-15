@@ -41,7 +41,7 @@ func PingLinksLatencyRun(links []string, max int, runPings []RunPing) <-chan Lat
 	return resultChan
 }
 
-func PingLinksLatency(links []string, max int, runPings []RunPing) <-chan LatencyResult {
-	runs := append([]RunPing{RunVmess, RunTrojan}, runPings...)
-	return PingLinksLatencyRun(links, max, runs)
-}
+// func PingLinksLatency(links []string, max int, runPings []RunPing) <-chan LatencyResult {
+// 	runs := append([]RunPing{RunVmess, RunTrojan}, runPings...)
+// 	return PingLinksLatencyRun(links, max, runs)
+// }
