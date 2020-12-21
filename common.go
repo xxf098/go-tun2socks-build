@@ -36,6 +36,7 @@ const (
 	AddrTypeIPv6          = 0x04
 	StatusSucceeded       = 0x00
 	defaultReadBufferSize = 4096
+	remoteHost            = "clients3.google.com"
 )
 
 var (
@@ -89,7 +90,7 @@ func testLatencyWithSocks5(ip string, port uint32) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	remoteHost := "clients3.google.com"
+	// remoteHost := "clients3.google.com"
 	remotePort := 80
 	b := make([]byte, 0, 6+len(remoteHost))
 	b = append(b, Version5)
@@ -142,7 +143,7 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
-	remoteHost := "clients3.google.com"
+	// remoteHost := "clients3.google.com"
 	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
 	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
 		return err
@@ -164,7 +165,7 @@ func sendCode204Request(conn *net.Conn, timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
-	remoteHost := "clients3.google.com"
+	// remoteHost := "clients3.google.com"
 	// httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
 	httpRequest := "GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n"
 	if _, err = fmt.Fprintf(*conn, httpRequest, remoteHost); err != nil {
