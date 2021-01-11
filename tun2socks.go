@@ -54,9 +54,10 @@ type errPathObjHolder struct{}
 type protocol string
 
 const (
-	VMESS  protocol = protocol("vmess")
-	VLESS  protocol = protocol("vless")
-	TROJAN protocol = protocol("trojan")
+	VMESS       protocol = protocol("vmess")
+	VLESS       protocol = protocol("vless")
+	TROJAN      protocol = protocol("trojan")
+	SHADOWSOCKS protocol = protocol("shadowsocks")
 )
 
 func newError(values ...interface{}) *verrors.Error {
