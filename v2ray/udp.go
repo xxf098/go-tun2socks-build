@@ -87,6 +87,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	ctx, cancel := context.WithCancel(ctx)
 	pc, err := vcore.DialUDP(ctx, h.v)
 	if err != nil {
+		cancel()
 		return fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
 	timer := vsignal.CancelAfterInactivity(ctx, cancel, h.timeout)
