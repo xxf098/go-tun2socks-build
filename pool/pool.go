@@ -11,6 +11,7 @@ import (
 )
 
 const BufSize = 20 * 1024
+const BufSizeUDP = 32 * 1024
 const MTU = 2 * 1024
 
 type Interface struct {
