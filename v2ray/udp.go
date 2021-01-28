@@ -49,11 +49,10 @@ func (h *udpHandler) fetchInput(conn core.UDPConn) {
 		return
 	}
 
-	// buf := bytespool.Alloc(pool.BufSize)
-	// defer bytespool.Free(buf)
+	buf := bytespool.Alloc(pool.BufSize)
+	defer bytespool.Free(buf)
 
 	for {
-		buf := bytespool.Alloc(pool.BufSizeUDP)
 		n, _, err := c.conn.ReadFrom(buf)
 		if err != nil && n <= 0 {
 			h.Close(conn)
@@ -62,7 +61,6 @@ func (h *udpHandler) fetchInput(conn core.UDPConn) {
 		}
 		c.updater.Update()
 		_, err = conn.WriteFrom(buf[:n], c.target)
-		bytespool.Free(buf)
 		if err != nil {
 			h.Close(conn)
 			conn.Close()
@@ -75,7 +73,7 @@ func NewUDPHandler(ctx context.Context, instance *vcore.Instance, timeout time.D
 	return &udpHandler{
 		ctx:     ctx,
 		v:       instance,
-		conns:   make(map[core.UDPConn]*udpConnEntry, 32),
+		conns:   make(map[core.UDPConn]*udpConnEntry, 16),
 		timeout: timeout,
 	}
 }
