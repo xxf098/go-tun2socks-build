@@ -249,7 +249,7 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 	if profile.Net == "ws" {
 		outbound.StreamSettings = &v2ray.StreamSettings{
 			Network: profile.Net,
-			Wssettings: v2ray.Wssettings{
+			Wssettings: &v2ray.Wssettings{
 				ConnectionReuse: true, Path: profile.Path,
 			},
 		}

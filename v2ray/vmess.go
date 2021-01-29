@@ -92,8 +92,8 @@ type TLSSettings struct {
 
 type StreamSettings struct {
 	Network     string       `json:"network"`
-	Wssettings  Wssettings   `json:"wssettings"`
-	Security    string       `json:"security,omitempty"`
+	Wssettings  *Wssettings  `json:"wssettings,omitempty"`
+	Security    string       `json:"security"`
 	TLSSettings *TLSSettings `json:"tlsSettings,omitempty"`
 }
 
