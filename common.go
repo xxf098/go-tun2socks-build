@@ -325,6 +325,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 						AlterID:  profile.Aid,
 						Email:    "xxf098@github.com",
 						ID:       profile.ID,
+						Level:    8,
 						Security: profile.Security,
 					},
 				},
@@ -335,13 +336,19 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 	muxEnabled := false
 	if profile.VmessOptions.Mux > 0 {
 		muxEnabled = true
+	} else {
+		profile.VmessOptions.Mux = -1
 	}
+	tcp := conf.TransportProtocol("tcp")
 	vmessOutboundDetourConfig := conf.OutboundDetourConfig{
-		Protocol:      "vmess",
-		Tag:           "proxy",
-		MuxSettings:   &conf.MuxConfig{Enabled: muxEnabled, Concurrency: int16(profile.VmessOptions.Mux)},
-		Settings:      &outboundsSettingsMsg1,
-		StreamSetting: &conf.StreamConfig{},
+		Protocol:    "vmess",
+		Tag:         "proxy",
+		MuxSettings: &conf.MuxConfig{Enabled: muxEnabled, Concurrency: int16(profile.VmessOptions.Mux)},
+		Settings:    &outboundsSettingsMsg1,
+		StreamSetting: &conf.StreamConfig{
+			Network:  &tcp,
+			Security: "",
+		},
 	}
 	if profile.Net == "ws" {
 		transportProtocol := conf.TransportProtocol(profile.Net)
@@ -632,7 +639,19 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 }
 
 func creatPolicyConfig() *conf.PolicyConfig {
+	handshake := uint32(4)
+	connIdle := uint32(300)
+	downlinkOnly := uint32(1)
+	uplinkOnly := uint32(1)
 	return &conf.PolicyConfig{
+		Levels: map[uint32]*conf.Policy{
+			8: &conf.Policy{
+				ConnectionIdle: &connIdle,
+				DownlinkOnly:   &downlinkOnly,
+				Handshake:      &handshake,
+				UplinkOnly:     &uplinkOnly,
+			},
+		},
 		System: &conf.SystemPolicy{
 			StatsOutboundUplink:   true,
 			StatsOutboundDownlink: true,
