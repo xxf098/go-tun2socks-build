@@ -39,6 +39,7 @@ type Users struct {
 	Email    string `json:"email"`
 	ID       string `json:"id"`
 	Security string `json:"security"`
+	Level    int    `json:"level"`
 }
 type Vnext struct {
 	Address string  `json:"address"`
