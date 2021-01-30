@@ -2,10 +2,32 @@ package v2ray
 
 type VmessConfig struct {
 	DNS       DNS         `json:"dns"`
-	Inbounds  []Inbounds  `json:"inbounds"`
+	Inbounds  []Inbounds  `json:"inbounds,omitempty"`
 	Log       Log         `json:"log"`
 	Outbounds []Outbounds `json:"outbounds"`
 	Routing   Routing     `json:"routing"`
+	Policy    Policy      `json:"policy"`
+	Stats     Stats       `json:"stats"`
+}
+
+type Stats struct {
+}
+
+type Policy struct {
+	Levels map[string]Level `json:"levels"`
+	System System           `json:"system"`
+}
+
+type Level struct {
+	ConnIdle     int `json:"connIdle"`
+	DownlinkOnly int `json:"downlinkOnly"`
+	Handshake    int `json:"handshake"`
+	UplinkOnly   int `json:"uplinkOnly"`
+}
+
+type System struct {
+	StatsOutboundUplink   bool `json:"statsOutboundUplink"`
+	StatsOutboundDownlink bool `json:"statsOutboundDownlink"`
 }
 
 type Hosts map[string]string
@@ -32,7 +54,8 @@ type Log struct {
 	Loglevel string `json:"loglevel"`
 }
 type Mux struct {
-	Enabled bool `json:"enabled"`
+	Enabled     bool `json:"enabled"`
+	Concurrency int  `json:"concurrency"`
 }
 type Users struct {
 	AlterID  int    `json:"alterId"`
