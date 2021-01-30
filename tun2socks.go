@@ -184,11 +184,14 @@ func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
 
 // TODO: try with native struct config conf.vmess
 func generateVmessConfig(profile *Vmess) ([]byte, error) {
-	vmessConfig := v2ray.VmessConfig{}
-	vmessConfig.Log = v2ray.Log{Access: "", Error: "", Loglevel: profile.Loglevel}
+	vmessConfig := v2ray.VmessConfig{
+		Stats:    v2ray.Stats{},
+		Log:      v2ray.Log{Loglevel: "warning"},
+		Inbounds: nil,
+	}
 	vmessConfig.DNS = v2ray.DNS{
-		Servers: []string{"1.1.1.1", "localhost"},
-		Hosts:   v2ray.Hosts{"baidu.com": "127.0.0.1", "umeng.com": "127.0.0.1"},
+		Servers: []string{"1.1.1.1"},
+		Hosts:   v2ray.Hosts{"domain:googleapis.cn": "googleapis.com"},
 	}
 	vmessConfig.Routing = v2ray.Routing{
 		DomainStrategy: "IPIfNonMatch",
@@ -205,29 +208,10 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 			},
 		},
 	}
-	vmessConfig.Inbounds = []v2ray.Inbounds{
-		v2ray.Inbounds{
-			Tag:      "socks-in",
-			Protocol: "socks",
-			Port:     8088,
-			Listen:   "::",
-			InboundsSettings: &v2ray.InboundsSettings{
-				Auth: "noauth",
-				IP:   "127.0.0.1",
-				UDP:  true,
-			},
-		},
-		// v2ray.Inbounds{
-		// 	Tag:      "http-in",
-		// 	Protocol: "http",
-		// 	Port:     8090,
-		// 	Listen:   "::",
-		// },
-	}
 	outbound := v2ray.Outbounds{
 		Tag:      "proxy",
 		Protocol: "vmess",
-		Mux:      &v2ray.Mux{Enabled: true},
+		Mux:      &v2ray.Mux{Enabled: false, Concurrency: -1},
 		Settings: v2ray.OutboundsSettings{
 			Vnext: []v2ray.Vnext{
 				v2ray.Vnext{
@@ -238,13 +222,14 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 							AlterID:  profile.Aid,
 							Email:    "v2ray@email.com",
 							ID:       profile.ID,
-							Security: "auto",
+							Security: profile.Security,
+							Level:    8,
 						},
 					},
 				},
 			},
 		},
-		StreamSettings: &v2ray.StreamSettings{},
+		StreamSettings: &v2ray.StreamSettings{Network: "tcp", Security: ""},
 	}
 	if profile.Net == "ws" {
 		outbound.StreamSettings = &v2ray.StreamSettings{
@@ -272,6 +257,20 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 			Settings: v2ray.OutboundsSettings{
 				DomainStrategy: "UseIP",
 			},
+		},
+	}
+	vmessConfig.Policy = v2ray.Policy{
+		Levels: map[string]v2ray.Level{
+			"8": v2ray.Level{
+				ConnIdle:     300,
+				DownlinkOnly: 1,
+				Handshake:    4,
+				UplinkOnly:   1,
+			},
+		},
+		System: v2ray.System{
+			StatsOutboundUplink:   true,
+			StatsOutboundDownlink: true,
 		},
 	}
 	// errStr, _ := json.Marshal(vmessConfig)
@@ -643,7 +642,7 @@ func StartV2Ray(
 		// core.RegisterTCPConnectionHandler(vhandler)
 		// core.RegisterUDPConnectionHandler(vhandler)
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
-		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 3*time.Minute))
 
 		// Write IP packets back to TUN.
 		core.RegisterOutputFn(func(data []byte) (int, error) {
@@ -730,7 +729,7 @@ func StartV2RayWithVmess(
 		}
 		// Register tun2socks connection handlers.
 		core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
-		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+		core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 3*time.Minute))
 
 		// Write IP packets back to TUN.
 		core.RegisterOutputFn(func(data []byte) (int, error) {
