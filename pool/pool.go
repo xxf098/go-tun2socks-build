@@ -11,8 +11,6 @@ import (
 )
 
 const BufSize = 20 * 1024
-const BufSizeUDP = 32 * 1024
-const MTU = 2 * 1024
 
 type Interface struct {
 	io.ReadWriteCloser
@@ -34,7 +32,7 @@ func OpenTunDevice(tunFd int) (*Interface, error) {
 func (tunDev *Interface) Run(ctx context.Context) {
 	// reader
 	for {
-		data := vbytespool.Alloc(MTU)
+		data := vbytespool.Alloc(BufSize)
 		n, err := tunDev.Read(data)
 		if err != nil && err != io.EOF {
 			return
@@ -48,6 +46,32 @@ func (tunDev *Interface) Run(ctx context.Context) {
 			return
 		default:
 			vbytespool.Free(data[:cap(data)])
+		}
+	}
+}
+
+func (tunDev *Interface) Copy(dst io.Writer) {
+	buf := vbytespool.Alloc(BufSize)
+	defer vbytespool.Free(buf)
+	// for {
+	// 	_, err := io.CopyBuffer(w, tunDev, data)
+	// 	if err != nil && err != io.EOF {
+	// 		return
+	// 	}
+	// }
+	for {
+		nr, err := tunDev.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if ew != nil {
+				err = ew
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+			}
+		}
+		if err != nil && err != io.EOF {
+			break
 		}
 	}
 }
