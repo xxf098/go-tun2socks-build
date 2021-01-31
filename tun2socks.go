@@ -746,7 +746,6 @@ func StartV2RayWithVmess(
 	return errors.New("packetFlow is null")
 }
 
-// TODO: support ipv6
 func StartV2RayWithTunFd(
 	tunFd int,
 	vpnService VpnService,
@@ -798,27 +797,27 @@ func StartV2RayWithTunFd(
 	}
 	// Register tun2socks connection handlers.
 	core.RegisterTCPConnHandler(v2ray.NewTCPHandler(ctx, v))
-	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 2*time.Minute))
+	core.RegisterUDPConnHandler(v2ray.NewUDPHandler(ctx, v, 3*time.Minute))
 
 	// Write IP packets back to TUN.
-	output := make(chan []byte, 2400)
+	// output := make(chan []byte, 2400)
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		// buf := vbytespool.Alloc(int32(len(data)))
 		// l := copy(buf, data)
-		output <- data
-		return len(data), nil
+		// output <- data
+		return tunDev.Write(data)
 	})
-	go func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case buf := <-output:
-				tunDev.Write(buf)
-				// vbytespool.Free(buf)
-			}
-		}
-	}(ctx)
+	// go func(ctx context.Context) {
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		case buf := <-output:
+	// 			tunDev.Write(buf)
+	// 			// vbytespool.Free(buf)
+	// 		}
+	// 	}
+	// }(ctx)
 	// core.RegisterOutputCh(tunDev.WriteCh)
 	isStopped = false
 	runner.CheckAndStop(lwipTUNDataPipeTask)
@@ -826,7 +825,8 @@ func StartV2RayWithTunFd(
 
 	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
 		zeroErr := errors.New("nil")
-		handlePacket(ctx, tunDev, lwipWriter, shouldStop)
+		// handlePacket(ctx, tunDev, lwipWriter, shouldStop)
+		tunDev.Copy(lwipWriter)
 		return zeroErr // any errors?
 	})
 	updateStatusPipeTask = runner.Go(func(shouldStop runner.S) error {
