@@ -28,6 +28,7 @@ import (
 	vinternet "v2ray.com/core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/runner"
@@ -64,16 +65,7 @@ func newError(values ...interface{}) *verrors.Error {
 	return verrors.New(values...).WithPathObj(errPathObjHolder{})
 }
 
-type VmessOptions struct {
-	UseIPv6        bool   `json:"useIPv6"`
-	Loglevel       string `json:"logLevel"`
-	RouteMode      int    `json:"routeMode"` // for SSRRAY
-	EnableSniffing bool   `json:"enableSniffing"`
-	DNS            string `json:"dns"` // DNS Config
-	AllowInsecure  bool   `json:"allowInsecure"`
-	Mux            int    `json:"mux"`
-	LocalPort      int    `json:"localPort"`
-}
+type VmessOptions features.VmessOptions
 
 type Trojan struct {
 	Add            string
