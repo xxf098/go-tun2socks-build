@@ -1080,6 +1080,10 @@ func CheckVersion() string {
 	return vcore.Version()
 }
 
+func CheckXVersion() string {
+	return xcore.Version()
+}
+
 // TODO: update base on version
 func CopyAssets(assetDir string, force bool) error {
 	dats := [2]string{"geoip.dat", "geosite.dat"}
