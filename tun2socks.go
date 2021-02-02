@@ -27,17 +27,26 @@ import (
 	v2serial "v2ray.com/core/infra/conf/serial"
 	vinternet "v2ray.com/core/transport/internet"
 
+	xbytespool "github.com/xtls/xray-core/common/bytespool"
+	xsession "github.com/xtls/xray-core/common/session"
+	xcore "github.com/xtls/xray-core/core"
+	x2stats "github.com/xtls/xray-core/features/stats"
+	xinternet "github.com/xtls/xray-core/transport/internet"
+
 	"github.com/eycorsican/go-tun2socks/core"
 	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/runner"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
+	"github.com/xxf098/go-tun2socks-build/xray"
+
 )
 
 var localDNS = "223.5.5.5:53"
 var err error
 var lwipStack core.LWIPStack
+var x *xcore.Instance
 var v *vcore.Instance
 var mtuUsed int
 var lwipTUNDataPipeTask *runner.Task
@@ -45,6 +54,7 @@ var updateStatusPipeTask *runner.Task
 var tunDev *pool.Interface
 var lwipWriter io.Writer
 var statsManager v2stats.Manager
+var xStatsManager x2stats.Manager
 var isStopped = false
 
 const (
@@ -654,6 +664,78 @@ func StartV2Ray(
 	return errors.New("packetFlow is null")
 }
 
+func StartXRay(
+	packetFlow PacketFlow,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	configBytes []byte,
+	assetPath string) error {
+	if packetFlow != nil {
+
+		if lwipStack == nil {
+			// Setup the lwIP stack.
+			lwipStack = core.NewLWIPStack()
+		}
+
+		// Assets
+		os.Setenv("xray.location.asset", assetPath)
+		// log
+		registerLogService(logService)
+
+		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+		protectFd := func(s VpnService, fd int) error {
+			if s.Protect(fd) {
+				return nil
+			} else {
+				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+			}
+		}
+		netCtlr := func(network, address string, fd uintptr) error {
+			return protectFd(vpnService, int(fd))
+		}
+		xinternet.RegisterDialerController(netCtlr)
+		xinternet.RegisterListenerController(netCtlr)
+
+		// Share the buffer pool.
+		core.SetBufferPool(xbytespool.GetPool(core.BufSize))
+
+		// Start the V2Ray instance.
+		x, err = xray.StartInstance(configBytes)
+		if err != nil {
+			log.Fatalf("start V instance failed: %v", err)
+			return err
+		}
+
+		// Configure sniffing settings for traffic coming from tun2socks.
+		ctx := context.Background()
+		content := xsession.ContentFromContext(ctx)
+		if content == nil {
+			content = new(xsession.Content)
+			ctx = xsession.ContextWithContent(ctx, content)
+		}
+
+		core.RegisterTCPConnHandler(xray.NewTCPHandler(ctx, x))
+		core.RegisterUDPConnHandler(xray.NewUDPHandler(ctx, x, 3*time.Minute))
+
+		// Write IP packets back to TUN.
+		core.RegisterOutputFn(func(data []byte) (int, error) {
+			if !isStopped {
+				packetFlow.WritePacket(data)
+			}
+			return len(data), nil
+		})
+
+		xStatsManager = x.GetFeature(x2stats.ManagerType()).(x2stats.Manager)
+		runner.CheckAndStop(updateStatusPipeTask)
+		updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
+		isStopped = false
+		logService.WriteLog(fmt.Sprintf("XRay %s started!", CheckXVersion()))
+		return nil
+	}
+	return errors.New("packetFlow is null")
+}
+
 func GenerateVmessString(profile *Vmess) (string, error) {
 	configBytes, err := generateVmessConfig(profile)
 	if err != nil {
@@ -929,9 +1011,17 @@ func StopV2Ray() {
 		statsManager.Close()
 		statsManager = nil
 	}
+	if xStatsManager != nil {
+		xStatsManager.Close()
+		xStatsManager = nil
+	}
 	if v != nil {
 		v.Close()
 		v = nil
+	}
+	if x != nil {
+		x.Close()
+		x = nil
 	}
 }
 
