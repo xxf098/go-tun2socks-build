@@ -31,6 +31,7 @@ import (
 	xsession "github.com/xtls/xray-core/common/session"
 	xcore "github.com/xtls/xray-core/core"
 	x2stats "github.com/xtls/xray-core/features/stats"
+	xserial "github.com/xtls/xray-core/infra/conf/serial"
 	xinternet "github.com/xtls/xray-core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
@@ -62,13 +63,12 @@ const (
 )
 
 type errPathObjHolder struct{}
-type protocol string
 
 const (
-	VMESS       protocol = protocol("vmess")
-	VLESS       protocol = protocol("vless")
-	TROJAN      protocol = protocol("trojan")
-	SHADOWSOCKS protocol = protocol("shadowsocks")
+	VMESS       string = "vmess"
+	VLESS       string = "vless"
+	TROJAN      string = "trojan"
+	SHADOWSOCKS string = "shadowsocks"
 )
 
 func newError(values ...interface{}) *verrors.Error {
@@ -76,101 +76,40 @@ func newError(values ...interface{}) *verrors.Error {
 }
 
 type VmessOptions features.VmessOptions
-
-type Trojan struct {
-	Add            string
-	Port           int
-	Password       string
-	SNI            string
-	SkipCertVerify bool
-	VmessOptions
-}
+type Trojan features.Trojan
+type Vmess features.Vmess
 
 func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, opt []byte) *Trojan {
-	var options VmessOptions
-	err := json.Unmarshal(opt, &options)
-	if err != nil {
-		options = VmessOptions{
-			UseIPv6:        false,
-			Loglevel:       "error",
-			RouteMode:      0,
-			EnableSniffing: true,
-			DNS:            "1.1.1.1:53,223.5.5.5:53",
-			AllowInsecure:  true,
-			Mux:            -1,
-		}
-	}
-	if options.Mux < 1 {
-		options.Mux = -1
-	}
-	return &Trojan{
-		Add:            Add,
-		Port:           Port,
-		Password:       Password,
-		SNI:            SNI,
-		SkipCertVerify: SkipCertVerify,
-		VmessOptions:   options,
-	}
+	t := Trojan(*features.NewTrojan(Add, Port, Password, SNI, SkipCertVerify, opt))
+	return &t
 }
 
 func (t *Trojan) toVmess() *Vmess {
+	trojan := features.Trojan(*t)
 	return &Vmess{
 		Protocol:     TROJAN,
-		Trojan:       t,
+		Trojan:       &trojan,
 		VmessOptions: t.VmessOptions,
 	}
 }
 
-// constructor export New
-type Vmess struct {
-	Host     string
-	Path     string
-	TLS      string
-	Add      string
-	Port     int
-	Aid      int
-	Net      string
-	ID       string
-	Type     string // headerType
-	Security string // vnext.Security
-	Protocol protocol
-	VmessOptions
-	Trojan *Trojan
+func NewShadowSocks(Add string, Port int, ID string, Security string, opt []byte) *Vmess {
+	options := features.NewVmessOptions(opt)
+	return &Vmess{
+		Add:          Add,
+		Port:         Port,
+		ID:           ID,
+		Security:     Security,
+		Protocol:     SHADOWSOCKS,
+		VmessOptions: options,
+		Trojan:       nil,
+	}
 }
 
 // TODO: default value
 func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, opt []byte) *Vmess {
-	var options VmessOptions
-	err := json.Unmarshal(opt, &options)
-	if err != nil {
-		options = VmessOptions{
-			UseIPv6:        false,
-			Loglevel:       "error",
-			RouteMode:      0,
-			EnableSniffing: true,
-			DNS:            "1.1.1.1:53,223.5.5.5:53",
-			AllowInsecure:  true,
-			Mux:            -1,
-		}
-	}
-	if options.Mux < 1 {
-		options.Mux = -1
-	}
-	return &Vmess{
-		Host:         Host,
-		Path:         Path,
-		TLS:          TLS,
-		Add:          Add,
-		Port:         Port,
-		Aid:          Aid,
-		Net:          Net,
-		ID:           ID,
-		Type:         Type,
-		Security:     Security,
-		Protocol:     VMESS,
-		VmessOptions: options,
-		Trojan:       nil,
-	}
+	v := Vmess(*features.NewVmess(Host, Path, TLS, Add, Port, Aid, Net, ID, Type, Security, opt))
+	return &v
 }
 
 func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
@@ -540,6 +479,34 @@ func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error)
 		return nil, err
 	}
 	statsManager = instance.GetFeature(v2stats.ManagerType()).(v2stats.Manager)
+	return instance, nil
+}
+
+func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
+	config, err := loadVmessConfig(profile)
+	if err != nil {
+		return nil, err
+	}
+	config.DNSConfig = nil
+	b, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+	jsonConfig, err := xserial.DecodeJSONConfig(bytes.NewReader(b))
+	jsonConfig.DNSConfig = xray.CreateDNSConfig(profile.VmessOptions)
+	pbConfig, err := jsonConfig.Build()
+	if err != nil {
+		return nil, err
+	}
+	instance, err := xcore.New(pbConfig)
+	if err != nil {
+		return nil, err
+	}
+	err = instance.Start()
+	if err != nil {
+		return nil, err
+	}
+	xStatsManager = instance.GetFeature(x2stats.ManagerType()).(x2stats.Manager)
 	return instance, nil
 }
 
