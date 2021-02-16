@@ -870,26 +870,76 @@ func StartV2RayWithTunFd(
 		tunDev.Copy(lwipWriter)
 		return zeroErr // any errors?
 	})
-	updateStatusPipeTask = runner.Go(func(shouldStop runner.S) error {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-		zeroErr := errors.New("nil")
-		for {
-			if shouldStop() {
-				break
-			}
-			select {
-			case <-ticker.C:
-				up := QueryOutboundStats("proxy", "uplink")
-				down := QueryOutboundStats("proxy", "downlink")
-				querySpeed.UpdateTraffic(up, down)
-			case <-lwipTUNDataPipeTask.StopChan():
-				return errors.New("stopped")
-			}
-		}
-		return zeroErr
-	})
+	updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
 	logService.WriteLog("V2Ray Started!")
+	return nil
+}
+
+func StartXRayWithTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	profile *Vmess,
+	assetPath string) error {
+	tunDev, err = pool.OpenTunDevice(tunFd)
+	if err != nil {
+		log.Fatalf("failed to open tun device: %v", err)
+	}
+	if lwipStack != nil {
+		lwipStack.Close()
+	}
+	lwipStack = core.NewLWIPStack()
+	lwipWriter = lwipStack.(io.Writer)
+
+	// init v2ray
+	os.Setenv("v2ray.location.asset", assetPath)
+	registerLogService(logService)
+	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+	protectFd := func(s VpnService, fd int) error {
+		if s.Protect(fd) {
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+		}
+	}
+	netCtlr := func(network, address string, fd uintptr) error {
+		return protectFd(vpnService, int(fd))
+	}
+	xinternet.RegisterDialerController(netCtlr)
+	xinternet.RegisterListenerController(netCtlr)
+	core.SetBufferPool(xbytespool.GetPool(core.BufSize))
+
+	x, err = startXRayInstance(profile)
+	if err != nil {
+		log.Fatalf("start V instance failed: %v", err)
+		return err
+	}
+	ctx := context.Background()
+	content := xsession.ContentFromContext(ctx)
+	if content == nil {
+		content = new(xsession.Content)
+		ctx = xsession.ContextWithContent(ctx, content)
+	}
+	// Register tun2socks connection handlers.
+	core.RegisterTCPConnHandler(xray.NewTCPHandler(ctx, x))
+	core.RegisterUDPConnHandler(xray.NewUDPHandler(ctx, x, 3*time.Minute))
+
+	// Write IP packets back to TUN.
+	core.RegisterOutputFn(func(data []byte) (int, error) {
+		return tunDev.Write(data)
+	})
+	isStopped = false
+	runner.CheckAndStop(lwipTUNDataPipeTask)
+	runner.CheckAndStop(updateStatusPipeTask)
+
+	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
+		zeroErr := errors.New("nil")
+		tunDev.Copy(lwipWriter)
+		return zeroErr // any errors?
+	})
+	updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
+	logService.WriteLog(fmt.Sprintf("Start XRay %s", CheckXVersion()))
 	return nil
 }
 
