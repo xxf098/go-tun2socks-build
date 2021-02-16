@@ -13,7 +13,7 @@ type LatencyResult struct {
 
 type RunPing func(int, string, chan<- LatencyResult) (error, bool)
 
-func PingLinksLatencyRun(links []string, max int, runPings []RunPing) <-chan LatencyResult {
+func BatchTestLinks(links []string, max int, runPings []RunPing) <-chan LatencyResult {
 	if max < 1 {
 		max = 5
 	}
