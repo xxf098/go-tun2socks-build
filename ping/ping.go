@@ -2,8 +2,8 @@ package ping
 
 import "sync"
 
-type LatencyResult struct {
-	Elapsed  int64
+type TestResult struct {
+	Result   int64
 	Server   string
 	Port     int
 	Index    int
@@ -11,14 +11,14 @@ type LatencyResult struct {
 	Protocol string
 }
 
-type RunPing func(int, string, chan<- LatencyResult) (error, bool)
+type RunFunc func(int, string, chan<- TestResult) (error, bool)
 
-func BatchTestLinks(links []string, max int, runPings []RunPing) <-chan LatencyResult {
+func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResult {
 	if max < 1 {
 		max = 5
 	}
-	resultChan := make(chan LatencyResult)
-	go func(c chan<- LatencyResult) {
+	resultChan := make(chan TestResult)
+	go func(c chan<- TestResult) {
 		maxChan := make(chan bool, max)
 		var wg sync.WaitGroup
 		for i, link := range links {
@@ -26,8 +26,8 @@ func BatchTestLinks(links []string, max int, runPings []RunPing) <-chan LatencyR
 			go func(index int, link string) {
 				defer wg.Done()
 				maxChan <- true
-				for _, runPing := range runPings {
-					_, next := runPing(index, link, c)
+				for _, runFunc := range runFuncs {
+					_, next := runFunc(index, link, c)
 					if !next {
 						break
 					}
