@@ -1,7 +1,13 @@
 package features
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"net"
+
+	vcore "v2ray.com/core"
+	vnet "v2ray.com/core/common/net"
 )
 
 type VmessOptions struct {
@@ -68,4 +74,16 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 		VmessOptions: options,
 		Trojan:       nil,
 	}
+}
+
+type VmessDialer struct {
+	Instance *vcore.Instance
+}
+
+func (d *VmessDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
+	dest, err := vnet.ParseDestination(fmt.Sprintf("%s:%s", network, addr))
+	if err != nil {
+		return nil, err
+	}
+	return vcore.Dial(ctx, d.Instance, dest)
 }
