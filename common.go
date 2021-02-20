@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xxf098/go-tun2socks-build/features"
+	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	vcore "v2ray.com/core"
@@ -247,6 +249,62 @@ func parseUintBuf(b []byte) (int, int, error) {
 		v = vNew
 	}
 	return v, n, nil
+}
+
+func v2rayDownload(profile *Vmess, timeout time.Duration, resultChan chan<- int64) (int64, error) {
+	var max int64 = 0
+	config, err := loadVmessTestConfig(profile, 0)
+	if err != nil {
+		return max, err
+	}
+	instance, err := startInstance(profile, config)
+	if err != nil {
+		return max, err
+	}
+	dialer := features.VmessDialer{
+		Instance: instance,
+	}
+	httpTransport := &http.Transport{
+		DialContext: dialer.DialContext,
+	}
+	httpClient := &http.Client{Transport: httpTransport, Timeout: timeout}
+	req, err := http.NewRequest("GET", "http://cachefly.cachefly.net/100mb.test", nil)
+	if err != nil {
+		return max, err
+	}
+	response, err := httpClient.Do(req)
+	if err != nil {
+		return max, err
+	}
+	defer response.Body.Close()
+	start := time.Now()
+	prev := start
+	var total int64
+	for {
+		buf := pool.NewBytes(20 * 1024)
+		nr, er := response.Body.Read(buf)
+		total += int64(nr)
+		pool.FreeBytes(buf)
+		now := time.Now()
+		if now.Sub(prev) >= time.Second || err != nil {
+			prev = now
+			if resultChan != nil {
+				resultChan <- total
+			}
+			if max < total {
+				max = total
+			}
+			total = 0
+		}
+		if er != nil {
+			if er != io.EOF {
+				err = er
+			}
+			break
+		}
+	}
+	resultChan <- -1
+	return max, nil
 }
 
 func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {

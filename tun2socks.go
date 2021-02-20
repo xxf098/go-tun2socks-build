@@ -9,7 +9,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"runtime"
 	"strings"
@@ -1184,56 +1183,21 @@ func TestVmessLatency(profile *Vmess, port int) (int64, error) {
 	}
 }
 
-func TestVmessDownload(profile *Vmess, timeout time.Duration) (int64, error) {
-	var max int64 = 0
-	config, err := loadVmessTestConfig(profile, 0)
-	if err != nil {
-		return max, err
-	}
-	instance, err := startInstance(profile, config)
-	if err != nil {
-		return max, err
-	}
-	dialer := features.VmessDialer{
-		Instance: instance,
-	}
-	httpTransport := &http.Transport{
-		DialContext: dialer.DialContext,
-	}
-	httpClient := &http.Client{Transport: httpTransport, Timeout: timeout}
-	req, err := http.NewRequest("GET", "http://cachefly.cachefly.net/100mb.test", nil)
-	if err != nil {
-		return max, err
-	}
-	response, err := httpClient.Do(req)
-	if err != nil {
-		return max, err
-	}
-	defer response.Body.Close()
-	start := time.Now()
-	prev := start
-	var total int64
-	for {
-		buf := pool.NewBytes(20 * 1024)
-		nr, er := response.Body.Read(buf)
-		total += int64(nr)
-		pool.FreeBytes(buf)
-		now := time.Now()
-		if now.Sub(prev) >= time.Second || err != nil {
-			prev = now
-			if max < total {
-				max = total
+func TestVmessDownload(profile *Vmess, timeout time.Duration, cb TestLatency) (int64, error) {
+	c := make(chan int64)
+	go func() {
+		for {
+			select {
+			case s := <-c:
+				if s < 0 {
+					return
+				}
+				// fmt.Println(download.ByteCountIEC(s))
+				cb.UpdateLatency(-1, s)
 			}
-			total = 0
 		}
-		if er != nil {
-			if er != io.EOF {
-				err = er
-			}
-			break
-		}
-	}
-	return max, nil
+	}()
+	return v2rayDownload(profile, 15*time.Second, c)
 }
 
 func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLatency) {
