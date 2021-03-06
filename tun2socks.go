@@ -15,17 +15,17 @@ import (
 	"syscall"
 	"time"
 
+	vcore "github.com/v2fly/v2ray-core/v4"
+	vproxyman "github.com/v2fly/v2ray-core/v4/app/proxyman"
+	vbytespool "github.com/v2fly/v2ray-core/v4/common/bytespool"
+	verrors "github.com/v2fly/v2ray-core/v4/common/errors"
+	vnet "github.com/v2fly/v2ray-core/v4/common/net"
+	v2filesystem "github.com/v2fly/v2ray-core/v4/common/platform/filesystem"
+	v2stats "github.com/v2fly/v2ray-core/v4/features/stats"
+	"github.com/v2fly/v2ray-core/v4/infra/conf"
+	v2serial "github.com/v2fly/v2ray-core/v4/infra/conf/serial"
+	vinternet "github.com/v2fly/v2ray-core/v4/transport/internet"
 	mobasset "golang.org/x/mobile/asset"
-	vcore "v2ray.com/core"
-	vproxyman "v2ray.com/core/app/proxyman"
-	vbytespool "v2ray.com/core/common/bytespool"
-	verrors "v2ray.com/core/common/errors"
-	vnet "v2ray.com/core/common/net"
-	v2filesystem "v2ray.com/core/common/platform/filesystem"
-	v2stats "v2ray.com/core/features/stats"
-	"v2ray.com/core/infra/conf"
-	v2serial "v2ray.com/core/infra/conf/serial"
-	vinternet "v2ray.com/core/transport/internet"
 
 	xbytespool "github.com/xtls/xray-core/common/bytespool"
 	xsession "github.com/xtls/xray-core/common/session"
@@ -41,7 +41,6 @@ import (
 	"github.com/xxf098/go-tun2socks-build/runner"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	"github.com/xxf098/go-tun2socks-build/xray"
-
 )
 
 var localDNS = "223.5.5.5:53"
@@ -1042,7 +1041,7 @@ func StopV2Ray() {
 	}
 }
 
-// ~/go/src/v2ray.com/core/proxy/vmess/outbound/outbound.go
+// ~/go/src/github.com/v2fly/v2ray-core/v4/proxy/vmess/outbound/outbound.go
 func QueryStats(direct string) int64 {
 	if statsManager == nil {
 		return 0

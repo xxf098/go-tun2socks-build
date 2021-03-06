@@ -1,8 +1,8 @@
 package v2ray
 
 import (
-	vnet "v2ray.com/core/common/net"
-	"v2ray.com/core/infra/conf"
+	vnet "github.com/v2fly/v2ray-core/v4/common/net"
+	"github.com/v2fly/v2ray-core/v4/infra/conf"
 )
 
 var localhost = &conf.Address{vnet.IPAddress([]byte{0, 0, 0, 0})}
