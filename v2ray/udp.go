@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	vcore "v2ray.com/core"
-	vsession "v2ray.com/core/common/session"
-	vsignal "v2ray.com/core/common/signal"
-	vtask "v2ray.com/core/common/task"
+	vcore "github.com/v2fly/v2ray-core/v4"
+	vsession "github.com/v2fly/v2ray-core/v4/common/session"
+	vsignal "github.com/v2fly/v2ray-core/v4/common/signal"
+	vtask "github.com/v2fly/v2ray-core/v4/common/task"
 
 	"github.com/eycorsican/go-tun2socks/common/log"
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/v2fly/v2ray-core/v4/common/bytespool"
 	"github.com/xxf098/go-tun2socks-build/pool"
-	"v2ray.com/core/common/bytespool"
 )
 
 type udpConnEntry struct {

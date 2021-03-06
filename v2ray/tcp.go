@@ -6,13 +6,13 @@ import (
 	"io"
 	"net"
 
-	vcore "v2ray.com/core"
-	vnet "v2ray.com/core/common/net"
-	vsession "v2ray.com/core/common/session"
+	vcore "github.com/v2fly/v2ray-core/v4"
+	vnet "github.com/v2fly/v2ray-core/v4/common/net"
+	vsession "github.com/v2fly/v2ray-core/v4/common/session"
 
 	"github.com/eycorsican/go-tun2socks/core"
+	"github.com/v2fly/v2ray-core/v4/common/bytespool"
 	"github.com/xxf098/go-tun2socks-build/pool"
-	"v2ray.com/core/common/bytespool"
 )
 
 type tcpHandler struct {

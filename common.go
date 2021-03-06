@@ -13,18 +13,18 @@ import (
 	"strings"
 	"time"
 
+	vcore "github.com/v2fly/v2ray-core/v4"
+	vproxyman "github.com/v2fly/v2ray-core/v4/app/proxyman"
+	verrors "github.com/v2fly/v2ray-core/v4/common/errors"
+	vnet "github.com/v2fly/v2ray-core/v4/common/net"
+	vsession "github.com/v2fly/v2ray-core/v4/common/session"
+	vinbound "github.com/v2fly/v2ray-core/v4/features/inbound"
+	"github.com/v2fly/v2ray-core/v4/infra/conf"
+	json_reader "github.com/v2fly/v2ray-core/v4/infra/conf/json"
 	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
-	vcore "v2ray.com/core"
-	vproxyman "v2ray.com/core/app/proxyman"
-	verrors "v2ray.com/core/common/errors"
-	vnet "v2ray.com/core/common/net"
-	vsession "v2ray.com/core/common/session"
-	vinbound "v2ray.com/core/features/inbound"
-	"v2ray.com/core/infra/conf"
-	json_reader "v2ray.com/core/infra/conf/json"
 )
 
 const (
