@@ -41,6 +41,8 @@ import (
 	"github.com/xxf098/go-tun2socks-build/runner"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	"github.com/xxf098/go-tun2socks-build/xray"
+
+	"github.com/xxf098/lite-proxy/download"
 )
 
 var localDNS = "223.5.5.5:53"
@@ -1197,6 +1199,23 @@ func TestVmessDownload(profile *Vmess, timeout time.Duration, cb TestLatency) (i
 		}
 	}()
 	return v2rayDownload(profile, 15*time.Second, c)
+}
+
+func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
+	c := make(chan int64)
+	go func() {
+		for {
+			select {
+			case s := <-c:
+				if s < 0 {
+					return
+				}
+				// fmt.Println(download.ByteCountIEC(s))
+				cb.UpdateLatency(-1, s)
+			}
+		}
+	}()
+	return download.Download(link, 15*time.Second, 15*time.Second, c)
 }
 
 func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLatency) {
