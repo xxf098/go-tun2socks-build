@@ -47,12 +47,12 @@ func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResu
 }
 
 func runVmess(index int, link string, c chan<- TestResult) (error, bool) {
-	option, err := config.VmessLinkToVmessOption(link)
+	option, err := config.VmessLinkToVmessConfigIP(link, false)
 	if err != nil {
 		return err, true
 	}
-	network := option.Network
-	if network != "" && network != "tcp" && network != "ws" && network != "http" && network != "h2" {
+	n := option.Net
+	if n != "" && n != "tcp" && n != "ws" && n != "http" && n != "h2" {
 		return nil, true
 	}
 	return runLite(index, link, "vmess", c)

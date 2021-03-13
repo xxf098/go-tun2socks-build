@@ -1204,7 +1204,7 @@ func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLat
 		concurrency = 5
 	}
 	links := strings.Split(link, ",")
-	resultCh := ping.BatchTestLinks(links, concurrency, []ping.RunFunc{})
+	resultCh := ping.BatchTestLinks(links, concurrency, []ping.RunFunc{runCore})
 	for range links {
 		select {
 		case r := <-resultCh:
@@ -1218,7 +1218,7 @@ func BatchTestLatency(link string, concurrency int, testLatency TestLatency) {
 		concurrency = 5
 	}
 	links := strings.Split(link, ",")
-	resultCh := ping.PingLinksLatency(links, concurrency, []ping.RunFunc{})
+	resultCh := ping.PingLinksLatency(links, concurrency, []ping.RunFunc{runCore})
 	for range links {
 		select {
 		case r := <-resultCh:

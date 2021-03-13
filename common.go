@@ -22,9 +22,11 @@ import (
 	"github.com/v2fly/v2ray-core/v4/infra/conf"
 	json_reader "github.com/v2fly/v2ray-core/v4/infra/conf/json"
 	"github.com/xxf098/go-tun2socks-build/features"
+	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
+	lconfig "github.com/xxf098/lite-proxy/config"
 )
 
 const (
@@ -832,4 +834,31 @@ func contextWithSniffingConfig(ctx context.Context, c *vproxyman.SniffingConfig)
 	content.SniffingRequest.Enabled = c.Enabled
 	content.SniffingRequest.OverrideDestinationForProtocol = c.DestinationOverride
 	return ctx
+}
+
+func runCore(index int, link string, c chan<- ping.TestResult) (error, bool) {
+	option, err := lconfig.VmessLinkToVmessConfigIP(link, false)
+	if err != nil {
+		return err, false
+	}
+	profile := NewVmess(option.Host,
+		option.Path,
+		option.TLS,
+		option.Add,
+		option.PortInt,
+		option.AidInt,
+		option.Net,
+		option.ID,
+		VMESS,
+		option.Security,
+		[]byte{})
+	elapse, err := TestVmessLatency(profile, -1)
+	result := ping.TestResult{
+		Result:   elapse,
+		Index:    index,
+		Err:      err,
+		Protocol: "vmess",
+	}
+	c <- result
+	return err, false
 }
