@@ -59,10 +59,18 @@ func runVmess(index int, link string, c chan<- TestResult) (error, bool) {
 }
 
 func runTrojan(index int, link string, c chan<- TestResult) (error, bool) {
+	_, err := config.TrojanLinkToTrojanOption(link)
+	if err != nil {
+		return err, true
+	}
 	return runLite(index, link, "trojan", c)
 }
 
 func runShadowSocks(index int, link string, c chan<- TestResult) (error, bool) {
+	_, err := config.SSLinkToSSOption(link)
+	if err != nil {
+		return err, true
+	}
 	return runLite(index, link, "ss", c)
 }
 
