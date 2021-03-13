@@ -570,7 +570,7 @@ func StartV2Ray(
 		}
 
 		// Assets
-		os.Setenv("v2ray.location.asset", assetPath)
+		os.Setenv(v2Asset, assetPath)
 		// log
 		registerLogService(logService)
 
@@ -727,7 +727,7 @@ func StartV2RayWithVmess(
 		}
 
 		// Assets
-		os.Setenv("v2ray.location.asset", assetPath)
+		os.Setenv(v2Asset, assetPath)
 		// logger
 		registerLogService(logService)
 		// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
@@ -804,7 +804,7 @@ func StartV2RayWithTunFd(
 	lwipWriter = lwipStack.(io.Writer)
 
 	// init v2ray
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	registerLogService(logService)
 	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 	protectFd := func(s VpnService, fd int) error {
@@ -892,7 +892,7 @@ func StartXRayWithTunFd(
 	lwipWriter = lwipStack.(io.Writer)
 
 	// init v2ray
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	registerLogService(logService)
 	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
 	protectFd := func(s VpnService, fd int) error {
@@ -1229,7 +1229,7 @@ func TestTCPPing(host string, port int) (int64, error) {
 }
 
 func TestConfigLatency(configBytes []byte, assetPath string) (int64, error) {
-	os.Setenv("v2ray.location.asset", assetPath)
+	os.Setenv(v2Asset, assetPath)
 	server, err := vcore.StartInstance("json", configBytes)
 	if err != nil {
 		return 0, err
