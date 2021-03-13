@@ -2,8 +2,10 @@ package ping
 
 import (
 	"sync"
+	"time"
 
 	"github.com/xxf098/lite-proxy/config"
+	"github.com/xxf098/lite-proxy/download"
 	"github.com/xxf098/lite-proxy/request"
 )
 
@@ -88,5 +90,22 @@ func runLite(index int, link string, protocol string, c chan<- TestResult) (erro
 
 func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestResult {
 	runs := append([]RunFunc{runVmess, runTrojan, runShadowSocks}, runPings...)
+	return BatchTestLinks(links, max, runs)
+}
+
+func runDownload(index int, link string, c chan<- TestResult) (error, bool) {
+	speed, err := download.Download(link, 15*time.Second, 15*time.Second, nil)
+	result := TestResult{
+		Result:   speed,
+		Index:    index,
+		Err:      err,
+		Protocol: "download",
+	}
+	c <- result
+	return err, false
+}
+
+func DownloadLinksSpeed(links []string, max int) <-chan TestResult {
+	runs := append([]RunFunc{runDownload})
 	return BatchTestLinks(links, max, runs)
 }

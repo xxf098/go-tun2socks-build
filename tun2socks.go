@@ -1218,6 +1218,20 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 	return download.Download(link, 15*time.Second, 15*time.Second, c)
 }
 
+func BatchTestDownload(link string, concurrency int, testLatency TestLatency) {
+	if concurrency < 1 {
+		concurrency = 5
+	}
+	links := strings.Split(link, ",")
+	resultCh := ping.DownloadLinksSpeed(links, concurrency)
+	for range links {
+		select {
+		case r := <-resultCh:
+			testLatency.UpdateLatency(r.Index, r.Result)
+		}
+	}
+}
+
 func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLatency) {
 	if concurrency < 1 {
 		concurrency = 5
