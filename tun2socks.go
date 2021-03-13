@@ -1213,6 +1213,20 @@ func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLat
 	}
 }
 
+func BatchTestLatency(link string, concurrency int, testLatency TestLatency) {
+	if concurrency < 1 {
+		concurrency = 5
+	}
+	links := strings.Split(link, ",")
+	resultCh := ping.PingLinksLatency(links, concurrency, []ping.RunFunc{})
+	for range links {
+		select {
+		case r := <-resultCh:
+			testLatency.UpdateLatency(r.Index, r.Result)
+		}
+	}
+}
+
 func TestTrojanLatency(trojan *Trojan) (int64, error) {
 	profile := trojan.toVmess()
 	return TestVmessLatency(profile, -1)

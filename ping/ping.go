@@ -1,6 +1,11 @@
 package ping
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/xxf098/lite-proxy/config"
+	"github.com/xxf098/lite-proxy/request"
+)
 
 type TestResult struct {
 	Result   int64
@@ -41,7 +46,39 @@ func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResu
 	return resultChan
 }
 
-// func PingLinksLatency(links []string, max int, runPings []RunPing) <-chan LatencyResult {
-// 	runs := append([]RunPing{RunVmess, RunTrojan}, runPings...)
-// 	return PingLinksLatencyRun(links, max, runs)
-// }
+func runVmess(index int, link string, c chan<- TestResult) (error, bool) {
+	option, err := config.VmessLinkToVmessOption(link)
+	if err != nil {
+		return err, true
+	}
+	network := option.Network
+	if network != "" && network != "tcp" && network != "ws" && network != "http" && network != "h2" {
+		return nil, true
+	}
+	return runLite(index, link, "vmess", c)
+}
+
+func runTrojan(index int, link string, c chan<- TestResult) (error, bool) {
+	return runLite(index, link, "trojan", c)
+}
+
+func runShadowSocks(index int, link string, c chan<- TestResult) (error, bool) {
+	return runLite(index, link, "ss", c)
+}
+
+func runLite(index int, link string, protocol string, c chan<- TestResult) (error, bool) {
+	elapse, err := request.PingLink(link, 1)
+	result := TestResult{
+		Result:   elapse,
+		Index:    index,
+		Err:      err,
+		Protocol: protocol,
+	}
+	c <- result
+	return err, false
+}
+
+func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestResult {
+	runs := append([]RunFunc{runVmess, runTrojan, runShadowSocks}, runPings...)
+	return BatchTestLinks(links, max, runs)
+}
