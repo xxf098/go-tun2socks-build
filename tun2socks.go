@@ -46,6 +46,7 @@ import (
 	lDialer "github.com/xxf098/lite-proxy/component/dialer"
 	"github.com/xxf098/lite-proxy/download"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
+	"github.com/xxf098/lite-proxy/request"
 )
 
 var localDNS = "223.5.5.5:53"
@@ -1261,6 +1262,15 @@ func TestVmessLatency(profile *Vmess, port int) (int64, error) {
 	} else {
 		return testLatencyWithSocks5("127.0.0.1", proxyPort)
 	}
+}
+
+// TODO: support more protocol
+func TestVmessLatencyDirect(profile *Vmess) (int64, error) {
+	opt, err := profile2Option(profile)
+	if err != nil {
+		return 0, err
+	}
+	return request.Ping(opt)
 }
 
 func TestVmessDownload(profile *Vmess, timeout time.Duration, cb TestLatency) (int64, error) {

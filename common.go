@@ -865,26 +865,15 @@ func runCore(index int, link string, c chan<- ping.TestResult) (error, bool) {
 }
 
 func vmess2Lite(profile *Vmess) (loutbound.Dialer, error) {
-	aidRaw, _ := json.Marshal(profile.Aid)
-	portRaw, _ := json.Marshal(profile.Port)
-	c := &lconfig.VmessConfig{
-		Add:        profile.Add,
-		Aid:        aidRaw,
-		Host:       profile.Host,
-		ID:         profile.ID,
-		Net:        profile.Net,
-		Path:       profile.Path,
-		Port:       portRaw,
-		TLS:        profile.TLS,
-		Type:       profile.Type,
-		Security:   profile.Security,
-		ServerName: profile.VmessOptions.ServerName,
-	}
-	opt, err := lconfig.VmessConfigToVmessOption(c)
+	option, err := profile2Option(profile)
 	if err != nil {
 		return nil, err
 	}
-	return loutbound.NewVmess(opt)
+	vmessOption, ok := option.(*loutbound.VmessOption)
+	if !ok {
+		return nil, newError("not support protocol")
+	}
+	return loutbound.NewVmess(vmessOption)
 }
 
 func trojan2Lite(profile *Vmess) (loutbound.Dialer, error) {
@@ -892,11 +881,41 @@ func trojan2Lite(profile *Vmess) (loutbound.Dialer, error) {
 }
 
 func ss2Lite(profile *Vmess) (loutbound.Dialer, error) {
-	opt := &loutbound.ShadowSocksOption{
-		Server:   profile.Add,
-		Port:     profile.Port,
-		Password: profile.ID,
-		Cipher:   profile.Security,
+	option, _ := profile2Option(profile)
+	ssOption, ok := option.(*loutbound.ShadowSocksOption)
+	if !ok {
+		return nil, newError("not support protocol")
 	}
-	return loutbound.NewShadowSocks(opt)
+	return loutbound.NewShadowSocks(ssOption)
+}
+
+func profile2Option(profile *Vmess) (interface{}, error) {
+	if profile.Protocol == VMESS {
+		aidRaw, _ := json.Marshal(profile.Aid)
+		portRaw, _ := json.Marshal(profile.Port)
+		c := &lconfig.VmessConfig{
+			Add:        profile.Add,
+			Aid:        aidRaw,
+			Host:       profile.Host,
+			ID:         profile.ID,
+			Net:        profile.Net,
+			Path:       profile.Path,
+			Port:       portRaw,
+			TLS:        profile.TLS,
+			Type:       profile.Type,
+			Security:   profile.Security,
+			ServerName: profile.VmessOptions.ServerName,
+		}
+		return lconfig.VmessConfigToVmessOption(c)
+	}
+	if profile.Protocol == SHADOWSOCKS {
+		opt := &loutbound.ShadowSocksOption{
+			Server:   profile.Add,
+			Port:     profile.Port,
+			Password: profile.ID,
+			Cipher:   profile.Security,
+		}
+		return opt, nil
+	}
+	return nil, newError("not support protocol")
 }
