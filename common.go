@@ -27,6 +27,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/trojan"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	lconfig "github.com/xxf098/lite-proxy/config"
+	loutbound "github.com/xxf098/lite-proxy/outbound"
 )
 
 const (
@@ -861,4 +862,41 @@ func runCore(index int, link string, c chan<- ping.TestResult) (error, bool) {
 	}
 	c <- result
 	return err, false
+}
+
+func vmess2Lite(profile *Vmess) (loutbound.Dialer, error) {
+	aidRaw, _ := json.Marshal(profile.Aid)
+	portRaw, _ := json.Marshal(profile.Port)
+	c := &lconfig.VmessConfig{
+		Add:        profile.Add,
+		Aid:        aidRaw,
+		Host:       profile.Host,
+		ID:         profile.ID,
+		Net:        profile.Net,
+		Path:       profile.Path,
+		Port:       portRaw,
+		TLS:        profile.TLS,
+		Type:       profile.Type,
+		Security:   profile.Security,
+		ServerName: profile.VmessOptions.ServerName,
+	}
+	opt, err := lconfig.VmessConfigToVmessOption(c)
+	if err != nil {
+		return nil, err
+	}
+	return loutbound.NewVmess(opt)
+}
+
+func trojan2Lite(profile *Vmess) (loutbound.Dialer, error) {
+	return nil, newError("not support protocol")
+}
+
+func ss2Lite(profile *Vmess) (loutbound.Dialer, error) {
+	opt := &loutbound.ShadowSocksOption{
+		Server:   profile.Add,
+		Port:     profile.Port,
+		Password: profile.ID,
+		Cipher:   profile.Security,
+	}
+	return loutbound.NewShadowSocks(opt)
 }

@@ -19,6 +19,7 @@ type VmessOptions struct {
 	AllowInsecure  bool   `json:"allowInsecure"`
 	Mux            int    `json:"mux"`
 	LocalPort      int    `json:"localPort"`
+	ServerName     string `json:"serverName"`
 }
 
 func NewVmessOptions(opt []byte) VmessOptions {

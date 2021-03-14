@@ -94,7 +94,7 @@ func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestRe
 }
 
 func runDownload(index int, link string, c chan<- TestResult) (error, bool) {
-	speed, err := download.Download(link, 15*time.Second, 15*time.Second, nil)
+	speed, err := download.Download(link, 12*time.Second, 12*time.Second, nil)
 	result := TestResult{
 		Result:   speed,
 		Index:    index,

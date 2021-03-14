@@ -36,13 +36,16 @@ import (
 
 	"github.com/eycorsican/go-tun2socks/core"
 	"github.com/xxf098/go-tun2socks-build/features"
+	"github.com/xxf098/go-tun2socks-build/lite"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	"github.com/xxf098/go-tun2socks-build/runner"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	"github.com/xxf098/go-tun2socks-build/xray"
 
+	lDialer "github.com/xxf098/lite-proxy/component/dialer"
 	"github.com/xxf098/lite-proxy/download"
+	loutbound "github.com/xxf098/lite-proxy/outbound"
 )
 
 var localDNS = "223.5.5.5:53"
@@ -50,6 +53,7 @@ var err error
 var lwipStack core.LWIPStack
 var x *xcore.Instance
 var v *vcore.Instance
+var l loutbound.Dialer
 var mtuUsed int
 var lwipTUNDataPipeTask *runner.Task
 var updateStatusPipeTask *runner.Task
@@ -511,6 +515,19 @@ func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
 	return instance, nil
 }
 
+func startLiteInstance(profile *Vmess) (loutbound.Dialer, error) {
+	switch profile.Protocol {
+	case VMESS:
+		return vmess2Lite(profile)
+	case TROJAN:
+		return trojan2Lite(profile)
+	case SHADOWSOCKS:
+		return ss2Lite(profile)
+	default:
+		return nil, newError("not supported protocol")
+	}
+}
+
 // VpnService should be implemented in Java/Kotlin.
 type VpnService interface {
 	// Protect is just a proxy to the VpnService.protect() method.
@@ -941,6 +958,67 @@ func StartXRayWithTunFd(
 	})
 	updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
 	logService.WriteLog(fmt.Sprintf("Start XRay %s", CheckXVersion()))
+	return nil
+}
+
+func StartV2RayLiteWithTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	profile *Vmess,
+	assetPath string) error {
+	tunDev, err = pool.OpenTunDevice(tunFd)
+	if err != nil {
+		log.Fatalf("failed to open tun device: %v", err)
+	}
+	if lwipStack != nil {
+		lwipStack.Close()
+	}
+	lwipStack = core.NewLWIPStack()
+	lwipWriter = lwipStack.(io.Writer)
+
+	// init v2ray
+	registerLogService(logService)
+	// Protect file descriptors of net connections in the VPN process to prevent infinite loop.
+	protectFd := func(s VpnService, fd int) error {
+		if s.Protect(fd) {
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+		}
+	}
+	netCtlr := func(network, address string, fd uintptr) error {
+		return protectFd(vpnService, int(fd))
+	}
+	lDialer.RegisterDialerController(netCtlr)
+	lDialer.RegisterListenerController(netCtlr)
+
+	l, err = startLiteInstance(profile)
+	if err != nil {
+		log.Fatalf("start V instance failed: %v", err)
+		return err
+	}
+	ctx := context.Background()
+	// Register tun2socks connection handlers.
+	core.RegisterTCPConnHandler(lite.NewTCPHandler(ctx, l))
+	core.RegisterUDPConnHandler(lite.NewUDPHandler(ctx, l, 3*time.Minute))
+
+	// Write IP packets back to TUN.
+	core.RegisterOutputFn(func(data []byte) (int, error) {
+		return tunDev.Write(data)
+	})
+	isStopped = false
+	runner.CheckAndStop(lwipTUNDataPipeTask)
+	runner.CheckAndStop(updateStatusPipeTask)
+
+	lwipTUNDataPipeTask = runner.Go(func(shouldStop runner.S) error {
+		zeroErr := errors.New("nil")
+		tunDev.Copy(lwipWriter)
+		return zeroErr // any errors?
+	})
+	updateStatusPipeTask = createUpdateStatusPipeTask(querySpeed)
+	logService.WriteLog(fmt.Sprintf("Start Lite %s", CheckVersion()))
 	return nil
 }
 
