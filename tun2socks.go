@@ -1119,6 +1119,7 @@ func StopV2Ray() {
 		x.Close()
 		x = nil
 	}
+	l = nil
 }
 
 // ~/go/src/github.com/v2fly/v2ray-core/v4/proxy/vmess/outbound/outbound.go
