@@ -18,7 +18,7 @@ type TestResult struct {
 	Protocol string
 }
 
-type RunFunc func(int, string, chan<- TestResult) (error, bool)
+type RunFunc func(int, string, chan<- TestResult) (bool, error)
 
 func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResult {
 	if max < 1 {
@@ -34,7 +34,7 @@ func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResu
 				defer wg.Done()
 				maxChan <- true
 				for _, runFunc := range runFuncs {
-					_, next := runFunc(index, link, c)
+					next, _ := runFunc(index, link, c)
 					if !next {
 						break
 					}
@@ -48,35 +48,35 @@ func BatchTestLinks(links []string, max int, runFuncs []RunFunc) <-chan TestResu
 	return resultChan
 }
 
-func runVmess(index int, link string, c chan<- TestResult) (error, bool) {
+func runVmess(index int, link string, c chan<- TestResult) (bool, error) {
 	option, err := config.VmessLinkToVmessConfigIP(link, false)
 	if err != nil {
-		return err, true
+		return true, err
 	}
 	n := option.Net
 	if n != "" && n != "tcp" && n != "ws" && n != "http" && n != "h2" {
-		return nil, true
+		return true, nil
 	}
 	return runLite(index, link, "vmess", c)
 }
 
-func runTrojan(index int, link string, c chan<- TestResult) (error, bool) {
+func runTrojan(index int, link string, c chan<- TestResult) (bool, error) {
 	_, err := config.TrojanLinkToTrojanOption(link)
 	if err != nil {
-		return err, true
+		return true, err
 	}
 	return runLite(index, link, "trojan", c)
 }
 
-func runShadowSocks(index int, link string, c chan<- TestResult) (error, bool) {
+func runShadowSocks(index int, link string, c chan<- TestResult) (bool, error) {
 	_, err := config.SSLinkToSSOption(link)
 	if err != nil {
-		return err, true
+		return true, err
 	}
 	return runLite(index, link, "ss", c)
 }
 
-func runLite(index int, link string, protocol string, c chan<- TestResult) (error, bool) {
+func runLite(index int, link string, protocol string, c chan<- TestResult) (bool, error) {
 	elapse, err := request.PingLink(link, 1)
 	result := TestResult{
 		Result:   elapse,
@@ -85,7 +85,7 @@ func runLite(index int, link string, protocol string, c chan<- TestResult) (erro
 		Protocol: protocol,
 	}
 	c <- result
-	return err, false
+	return false, err
 }
 
 func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestResult {
@@ -93,16 +93,35 @@ func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestRe
 	return BatchTestLinks(links, max, runs)
 }
 
-func runDownload(index int, link string, c chan<- TestResult) (error, bool) {
-	speed, err := download.Download(link, 12*time.Second, 12*time.Second, nil)
+func runDownload(index int, link string, c chan<- TestResult) (bool, error) {
+	trafficChan := make(chan int64)
+	go func() {
+		for {
+			select {
+			case s := <-trafficChan:
+				if s < 0 {
+					close(trafficChan)
+					return
+				}
+				r := TestResult{
+					Result:   s,
+					Index:    index,
+					Err:      nil,
+					Protocol: "traffic",
+				}
+				c <- r
+			}
+		}
+	}()
+	speed, err := download.Download(link, 12*time.Second, 12*time.Second, trafficChan)
 	result := TestResult{
 		Result:   speed,
 		Index:    index,
 		Err:      err,
-		Protocol: "download",
+		Protocol: "speed",
 	}
 	c <- result
-	return err, false
+	return false, err
 }
 
 func DownloadLinksSpeed(links []string, max int) <-chan TestResult {

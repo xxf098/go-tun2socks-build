@@ -558,6 +558,11 @@ type TestLatency interface {
 	UpdateLatency(id int, elapsed int64)
 }
 
+type TestDownload interface {
+	UpdateSpeed(id int, speed int64)
+	UpdateTraffic(id int, traffic int64)
+}
+
 // SetNonblock puts the fd in blocking or non-blocking mode.
 func SetNonblock(fd int, nonblocking bool) bool {
 	err := syscall.SetNonblock(fd, nonblocking)
@@ -1307,16 +1312,18 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 	return download.Download(link, 15*time.Second, 15*time.Second, c)
 }
 
-func BatchTestDownload(link string, concurrency int, testLatency TestLatency) {
+func BatchTestDownload(link string, concurrency int, testDownload TestDownload) {
 	if concurrency < 1 {
 		concurrency = 5
 	}
 	links := strings.Split(link, ",")
 	resultCh := ping.DownloadLinksSpeed(links, concurrency)
-	for range links {
-		select {
-		case r := <-resultCh:
-			testLatency.UpdateLatency(r.Index, r.Result)
+	for r := range resultCh {
+		if r.Protocol == "speed" {
+			testDownload.UpdateSpeed(r.Index, r.Result)
+		}
+		if r.Protocol == "traffic" {
+			testDownload.UpdateTraffic(r.Index, r.Result)
 		}
 	}
 }

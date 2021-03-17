@@ -837,10 +837,10 @@ func contextWithSniffingConfig(ctx context.Context, c *vproxyman.SniffingConfig)
 	return ctx
 }
 
-func runCore(index int, link string, c chan<- ping.TestResult) (error, bool) {
+func runCore(index int, link string, c chan<- ping.TestResult) (bool, error) {
 	option, err := lconfig.VmessLinkToVmessConfigIP(link, false)
 	if err != nil {
-		return err, false
+		return false, err
 	}
 	profile := NewVmess(option.Host,
 		option.Path,
@@ -861,7 +861,7 @@ func runCore(index int, link string, c chan<- ping.TestResult) (error, bool) {
 		Protocol: "vmess",
 	}
 	c <- result
-	return err, false
+	return false, err
 }
 
 func vmess2Lite(profile *Vmess) (loutbound.Dialer, error) {
