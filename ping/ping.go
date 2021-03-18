@@ -94,13 +94,13 @@ func PingLinksLatency(links []string, max int, runPings []RunFunc) <-chan TestRe
 }
 
 func runDownload(index int, link string, c chan<- TestResult) (bool, error) {
-	trafficChan := make(chan int64)
+	trafficChan := make(chan int64, 1)
+	defer close(trafficChan)
 	go func() {
 		for {
 			select {
-			case s := <-trafficChan:
-				if s < 0 {
-					close(trafficChan)
+			case s, ok := <-trafficChan:
+				if !ok || s < 0 {
 					return
 				}
 				r := TestResult{

@@ -566,10 +566,7 @@ type TestDownload interface {
 // SetNonblock puts the fd in blocking or non-blocking mode.
 func SetNonblock(fd int, nonblocking bool) bool {
 	err := syscall.SetNonblock(fd, nonblocking)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // SetLocalDNS sets the DNS server that used by Go's default resolver, it accepts
@@ -604,7 +601,7 @@ func StartV2Ray(
 			if s.Protect(fd) {
 				return nil
 			} else {
-				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
 		netCtlr := func(network, address string, fd uintptr) error {
@@ -679,7 +676,7 @@ func StartXRay(
 			if s.Protect(fd) {
 				return nil
 			} else {
-				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
 		netCtlr := func(network, address string, fd uintptr) error {
@@ -760,7 +757,7 @@ func StartV2RayWithVmess(
 			if s.Protect(fd) {
 				return nil
 			} else {
-				return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
 		netCtlr := func(network, address string, fd uintptr) error {
@@ -836,7 +833,7 @@ func StartV2RayWithTunFd(
 		if s.Protect(fd) {
 			return nil
 		} else {
-			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+			return fmt.Errorf("failed to protect fd %v", fd)
 		}
 	}
 	netCtlr := func(network, address string, fd uintptr) error {
@@ -924,7 +921,7 @@ func StartXRayWithTunFd(
 		if s.Protect(fd) {
 			return nil
 		} else {
-			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+			return fmt.Errorf("failed to protect fd %v", fd)
 		}
 	}
 	netCtlr := func(network, address string, fd uintptr) error {
@@ -991,7 +988,7 @@ func StartV2RayLiteWithTunFd(
 		if s.Protect(fd) {
 			return nil
 		} else {
-			return errors.New(fmt.Sprintf("failed to protect fd %v", fd))
+			return fmt.Errorf("failed to protect fd %v", fd)
 		}
 	}
 	netCtlr := func(network, address string, fd uintptr) error {
@@ -1328,6 +1325,7 @@ func BatchTestDownload(link string, concurrency int, testDownload TestDownload) 
 	}
 }
 
+// FIXME: block on startup
 func BatchTestVmessCoreLatency(link string, concurrency int, testLatency TestLatency) {
 	if concurrency < 1 {
 		concurrency = 5

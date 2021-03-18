@@ -87,10 +87,10 @@ func testLatency(url string) (int64, error) {
 func testLatencyWithSocks5(ip string, port uint32) (int64, error) {
 	addr := fmt.Sprintf("%s:%d", ip, port)
 	conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
-	defer conn.Close()
 	if err != nil {
 		return 0, err
 	}
+	defer conn.Close()
 	err = conn.SetDeadline(time.Now().Add(2 * time.Second))
 	if err != nil {
 		return 0, err
@@ -214,7 +214,7 @@ func parseFirstLine(buf []byte) (int, error) {
 	if statusCode == 204 || statusCode == 200 {
 		return len(buf) - len(bNext), nil
 	}
-	return 0, errors.New("Wrong Status Code")
+	return 0, errors.New("wrong status code")
 }
 
 func nextLine(b []byte) ([]byte, []byte, error) {
@@ -319,10 +319,10 @@ func testLatencyWithHTTP(v *vcore.Instance) (int64, error) {
 	sid := vsession.NewID()
 	ctx := vsession.ContextWithID(context.Background(), sid)
 	conn, err := vcore.Dial(ctx, v, dest)
-	defer conn.Close()
 	if err != nil {
 		return 0, fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
+	defer conn.Close()
 	timeout := 1235 * time.Millisecond
 	if err = sendCode204Request(&conn, timeout); err != nil {
 		timeout = 2358 * time.Millisecond
