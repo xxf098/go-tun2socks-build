@@ -8,7 +8,7 @@ require (
 	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/v2fly/v2ray-core/v4 v4.36.2
-	github.com/xtls/xray-core v1.3.1
+	github.com/xtls/xray-core v1.4.0
 	github.com/xxf098/lite-proxy v0.0.0
 	golang.org/x/mobile v0.0.0-20210220033013-bdb1ca9a1e08
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
