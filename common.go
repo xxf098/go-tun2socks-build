@@ -596,6 +596,11 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		OutboundTag: "blocked",
 		Domain:      v2ray.BlockDomains,
 	})
+	directDomains, _ := json.Marshal(v2ray.Rules{
+		Type:        "field",
+		OutboundTag: "direct",
+		Domain:      v2ray.DirectDomains,
+	})
 	// blockAd, _ := json.Marshal(v2ray.Rules{
 	// 	Type:        "field",
 	// 	OutboundTag: "blocked",
@@ -659,6 +664,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 			json.RawMessage(googleAPI),
 			json.RawMessage(blockDomain),
 			json.RawMessage(bypassLAN),
+			json.RawMessage(directDomains),
 			json.RawMessage(bypassChinaSite),
 			json.RawMessage(gfwList), // sniff
 			json.RawMessage(bypassChinaIP),

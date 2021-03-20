@@ -53,3 +53,7 @@ var BlockDomains = []string{
 	"at3.doubanio.com",
 	"p.pinduoduo.com",
 }
+
+var DirectDomains = []string{
+	"brave.com",
+}
