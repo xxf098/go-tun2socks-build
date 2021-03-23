@@ -21,4 +21,5 @@ require (
 replace (
 	github.com/v2fly/v2ray-core/v4 v4.36.2 => ../v2ray-core
 	github.com/xxf098/lite-proxy v0.0.0 => ../lite-proxy
+	github.com/xtls/xray-core v1.4.0 => ../xray-core
 )
