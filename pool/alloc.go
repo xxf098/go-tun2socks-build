@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+	"math"
 	"math/bits"
 	"sync"
 )
@@ -34,7 +35,7 @@ func NewAllocator() *Allocator {
 
 // Get a []byte from pool with most appropriate cap
 func (alloc *Allocator) Get(size int) []byte {
-	if size <= 0 || size > 65536 {
+	if size <= 0 || size > math.MaxUint16 {
 		return nil
 	}
 
@@ -50,7 +51,7 @@ func (alloc *Allocator) Get(size int) []byte {
 // which the cap must be exactly 2^n
 func (alloc *Allocator) Put(buf []byte) error {
 	bits := msb(cap(buf))
-	if cap(buf) == 0 || cap(buf) > 65536 || cap(buf) != 1<<bits {
+	if cap(buf) == 0 || cap(buf) > math.MaxUint16 || cap(buf) != 1<<bits {
 		return errors.New("allocator Put() incorrect buffer size")
 	}
 	alloc.buffers[bits].Put(buf)

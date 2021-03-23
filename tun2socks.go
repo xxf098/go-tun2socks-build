@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
 	"os"
 	"runtime"
@@ -446,7 +447,7 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 			},
 		},
 	}
-	if port > 0 && port < 65535 {
+	if port > 0 && port < math.MaxUint16 {
 		jsonConfig.InboundConfigs = []conf.InboundDetourConfig{
 			createInboundDetourConfig(port),
 		}
@@ -1157,7 +1158,7 @@ func TestConfig(ConfigureFileContent string, assetperfix string) error {
 func TestVmessLatency(profile *Vmess, port int) (int64, error) {
 	// os.Setenv("v2ray.location.asset", assetPath)
 	var proxyPort = testProxyPort
-	if port > 0 && port < 65535 {
+	if port > 0 && port < math.MaxUint16 {
 		proxyPort = uint32(port)
 	} else {
 		proxyPort = uint32(0)
