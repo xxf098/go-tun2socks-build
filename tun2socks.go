@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -1174,6 +1175,7 @@ func init() {
 			return vinternet.DialSystem(ctx, d, nil)
 		},
 	}
+	debug.SetGCPercent(10)
 }
 
 func CheckVersion() string {
