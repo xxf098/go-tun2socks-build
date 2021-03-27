@@ -45,6 +45,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/xray"
 
 	lDialer "github.com/xxf098/lite-proxy/component/dialer"
+	ldns "github.com/xxf098/lite-proxy/dns"
 	"github.com/xxf098/lite-proxy/download"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
 	"github.com/xxf098/lite-proxy/request"
@@ -1493,4 +1494,30 @@ func GetFreePort() (int, error) {
 	}
 	defer l.Close()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+// resolve dns
+func Resolve(addr string, enableIPv6 bool, hostname string) (string, error) {
+	servers := []ldns.NameServer{
+		{
+			Net:  "udp",
+			Addr: hostname,
+		},
+	}
+	c := ldns.Config{
+		Main:    servers,
+		Default: servers,
+	}
+	resolver := ldns.NewResolver(c)
+	var err error
+	var ip net.IP
+	if enableIPv6 {
+		ip, err = resolver.ResolveIP(addr)
+	} else {
+		ip, err = resolver.ResolveIPv4(addr)
+	}
+	if err != nil {
+		return "", err
+	}
+	return ip.String(), nil
 }
