@@ -1059,9 +1059,20 @@ func QueryStats(direct string) int64 {
 // add in v2ray-core v4.26.0
 func QueryOutboundStats(tag string, direct string) int64 {
 	if statsManager == nil {
-		return 0
+		return QueryOutboundXStats(tag, direct)
 	}
 	counter := statsManager.GetCounter(fmt.Sprintf("outbound>>>%s>>>traffic>>>%s", tag, direct))
+	if counter == nil {
+		return 0
+	}
+	return counter.Set(0)
+}
+
+func QueryOutboundXStats(tag string, direct string) int64 {
+	if xStatsManager == nil {
+		return 0
+	}
+	counter := xStatsManager.GetCounter(fmt.Sprintf("outbound>>>%s>>>traffic>>>%s", tag, direct))
 	if counter == nil {
 		return 0
 	}
