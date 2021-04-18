@@ -755,7 +755,7 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 		}
 	}
 	return &conf.DNSConfig{
-		Hosts:   v2ray.BlockHosts,
+		// Hosts:   v2ray.BlockHosts,
 		Servers: nameServerConfig,
 	}
 }
