@@ -77,7 +77,11 @@ func runShadowSocks(index int, link string, c chan<- TestResult) (bool, error) {
 }
 
 func runLite(index int, link string, protocol string, c chan<- TestResult) (bool, error) {
-	elapse, err := request.PingLink(link, 1)
+	opt := request.PingOption{
+		Attempts: 1,
+		TimeOut:  2000 * time.Millisecond,
+	}
+	elapse, err := request.PingLinkInternal(link, opt)
 	result := TestResult{
 		Result:   elapse,
 		Index:    index,
