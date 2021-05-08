@@ -58,4 +58,6 @@ import (
 	_ "github.com/v2fly/v2ray-core/v4/main/jsonem"
 	// Load config from file or http(s)
 	// _ "github.com/v2fly/v2ray-core/v4/main/confloader/external"
+	// geodata
+	_ "github.com/v2fly/v2ray-core/v4/infra/conf/geodata/standard"
 )
