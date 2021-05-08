@@ -24,6 +24,7 @@ import (
 	v2filesystem "github.com/v2fly/v2ray-core/v4/common/platform/filesystem"
 	v2stats "github.com/v2fly/v2ray-core/v4/features/stats"
 	"github.com/v2fly/v2ray-core/v4/infra/conf"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
 	v2serial "github.com/v2fly/v2ray-core/v4/infra/conf/serial"
 	vinternet "github.com/v2fly/v2ray-core/v4/transport/internet"
 	mobasset "golang.org/x/mobile/asset"
@@ -450,7 +451,7 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 	jsonConfig.DNSConfig = &conf.DNSConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{
-				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+				Address: &cfgcommon.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
 			},
 		},
