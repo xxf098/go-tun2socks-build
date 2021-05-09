@@ -20,6 +20,7 @@ import (
 	vsession "github.com/v2fly/v2ray-core/v4/common/session"
 	vinbound "github.com/v2fly/v2ray-core/v4/features/inbound"
 	"github.com/v2fly/v2ray-core/v4/infra/conf"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
 	json_reader "github.com/v2fly/v2ray-core/v4/infra/conf/json"
 	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/pool"
@@ -365,8 +366,8 @@ func createInboundDetourConfig(proxyPort uint32) conf.InboundDetourConfig {
 	inboundDetourConfig := conf.InboundDetourConfig{
 		Tag:       "socks-in",
 		Protocol:  "socks",
-		PortRange: &conf.PortRange{From: proxyPort, To: proxyPort},
-		ListenOn:  &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		PortRange: &cfgcommon.PortRange{From: proxyPort, To: proxyPort},
+		ListenOn:  &cfgcommon.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
 		Settings:  &inboundsSettingsMsg,
 	}
 	return inboundDetourConfig
@@ -428,7 +429,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		}
 		if profile.Host != "" {
 			hosts := strings.Split(profile.Host, ",")
-			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = conf.NewStringList(hosts)
+			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = cfgcommon.NewStringList(hosts)
 		}
 	}
 
@@ -769,7 +770,7 @@ func toNameServerConfig(hostport string) *conf.NameServerConfig {
 	if err != nil {
 		return nil
 	}
-	newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(host)}, Port: uint16(p)}
+	newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress(host)}, Port: uint16(p)}
 	return newConfig
 }
 
