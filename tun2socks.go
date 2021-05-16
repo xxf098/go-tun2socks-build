@@ -1324,7 +1324,7 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 	return download.Download(link, 15*time.Second, 15*time.Second, c)
 }
 
-func BatchTestDownload(link string, concurrency int, testDownload TestDownload) {
+func BatchTestDownload(link string, concurrency int, filename string, testDownload TestDownload) error {
 	if concurrency < 1 {
 		concurrency = 5
 	}
@@ -1338,6 +1338,7 @@ func BatchTestDownload(link string, concurrency int, testDownload TestDownload) 
 			testDownload.UpdateTraffic(r.Index, r.Result)
 		}
 	}
+	return nil
 }
 
 // FIXME: block on startup
