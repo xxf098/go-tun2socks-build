@@ -9,6 +9,9 @@ import (
 	"github.com/xxf098/lite-proxy/request"
 )
 
+const PROTOCOL_SPEED = "speed"
+const PROTOCOL_TRAFFIC = "traffic"
+
 type TestResult struct {
 	Result   int64
 	Server   string
@@ -111,7 +114,7 @@ func runDownload(index int, link string, c chan<- TestResult) (bool, error) {
 					Result:   s,
 					Index:    index,
 					Err:      nil,
-					Protocol: "traffic",
+					Protocol: PROTOCOL_TRAFFIC,
 				}
 				c <- r
 			}
@@ -122,7 +125,7 @@ func runDownload(index int, link string, c chan<- TestResult) (bool, error) {
 		Result:   speed,
 		Index:    index,
 		Err:      err,
-		Protocol: "speed",
+		Protocol: PROTOCOL_SPEED,
 	}
 	c <- result
 	return false, err
