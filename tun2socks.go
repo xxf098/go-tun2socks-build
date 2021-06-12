@@ -1324,12 +1324,29 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 	return download.Download(link, 15*time.Second, 15*time.Second, c)
 }
 
-func BatchTestDownload(link string, concurrency int, filename string, testDownload TestDownload) error {
+func BatchTestDownload(link string, concurrency int, testDownload TestDownload) error {
 	if concurrency < 1 {
 		concurrency = 5
 	}
 	links := strings.Split(link, ",")
 	resultCh := ping.DownloadLinksSpeed(links, concurrency)
+	for r := range resultCh {
+		if r.Protocol == ping.PROTOCOL_SPEED {
+			testDownload.UpdateSpeed(r.Index, r.Result)
+		}
+		if r.Protocol == ping.PROTOCOL_TRAFFIC {
+			testDownload.UpdateTraffic(r.Index, r.Result)
+		}
+	}
+	return nil
+}
+
+func BatchRenderTestDownload(link string, concurrency int, fontPath string, pngPath string, testDownload TestDownload) error {
+	if concurrency < 1 {
+		concurrency = 5
+	}
+	links := strings.Split(link, ",")
+	resultCh := ping.RenderDownloadLinksSpeedAndroid(links, concurrency, fontPath, pngPath)
 	for r := range resultCh {
 		if r.Protocol == "speed" {
 			testDownload.UpdateSpeed(r.Index, r.Result)

@@ -13,7 +13,7 @@ import (
 func testAll(ctx context.Context, links []string, max int, trafficChan chan<- int64) (chan render.Node, error) {
 
 	p := web.ProfileTest{
-		Conn:        nil,
+		Writer:      nil,
 		MessageType: web.ALLTEST,
 		Links:       links,
 		Options: &web.ProfileTestOptions{
@@ -32,7 +32,12 @@ func testAll(ctx context.Context, links []string, max int, trafficChan chan<- in
 	return p.TestAll(ctx, links, max, trafficChan)
 }
 
-func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath string) error {
+func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath string, testInfoChan chan<- TestResult) error {
+	defer func() {
+		if testInfoChan != nil {
+			close(testInfoChan)
+		}
+	}()
 	ctx := context.Background()
 	trafficChan := make(chan int64)
 	var start = time.Now()
@@ -52,18 +57,34 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 				sum += traffic
 				fmt.Printf("traffic: %s\n", download.ByteCountIECTrim(sum))
 			}
+			testResult := TestResult{
+				Result:   traffic,
+				Protocol: PROTOCOL_TRAFFIC,
+			}
+			if testInfoChan != nil {
+				testInfoChan <- testResult
+			}
 		case node := <-nodeChan:
 			nodes[node.Id] = node
 			if node.IsOk {
 				successCount += 1
+			}
+			testResult := TestResult{
+				Result:   node.MaxSpeed,
+				Index:    node.Id,
+				Protocol: PROTOCOL_SPEED,
+			}
+			if testInfoChan != nil {
+				testInfoChan <- testResult
 			}
 			fmt.Printf("index: %d, elapse: %s, avg: %s, max: %s\n", node.Id, node.Ping, download.ByteCountIEC(node.AvgSpeed), download.ByteCountIEC(node.MaxSpeed))
 			count += 1
 		}
 	}
 	close(nodeChan)
+
 	duration := web.FormatDuration(time.Since(start))
-	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original")
+	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original", "Asia/Shanghai", web.FontBytes)
 	table, err := render.NewTableWithOption(nodes, &options)
 	if err != nil {
 		return err
@@ -71,4 +92,12 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 	msg := table.FormatTraffic(download.ByteCountIECTrim(sum), duration, fmt.Sprintf("%d/%d", successCount, linkCount))
 	table.Draw(pngPath, msg)
 	return nil
+}
+
+func RenderDownloadLinksSpeedAndroid(links []string, max int, fontPath string, pngPath string) <-chan TestResult {
+	testInfoChan := make(chan TestResult)
+	go func(c chan<- TestResult) {
+		RenderDownloadLinksSpeed(links, max, fontPath, pngPath, c)
+	}(testInfoChan)
+	return testInfoChan
 }
