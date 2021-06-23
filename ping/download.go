@@ -84,7 +84,7 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 	close(nodeChan)
 
 	duration := web.FormatDuration(time.Since(start))
-	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original", "Asia/Shanghai", web.FontBytes)
+	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original", "Asia/Shanghai", []byte{})
 	table, err := render.NewTableWithOption(nodes, &options)
 	if err != nil {
 		return err
