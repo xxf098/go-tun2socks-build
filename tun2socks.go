@@ -45,11 +45,11 @@ import (
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	"github.com/xxf098/go-tun2socks-build/xray"
 
-	lDialer "github.com/xxf098/lite-proxy/component/dialer"
 	ldns "github.com/xxf098/lite-proxy/dns"
 	"github.com/xxf098/lite-proxy/download"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
 	"github.com/xxf098/lite-proxy/request"
+	lDialer "github.com/xxf098/lite-proxy/transport/dialer"
 )
 
 var localDNS = "223.5.5.5:53"

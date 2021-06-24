@@ -21,12 +21,13 @@ type tcpHandler struct {
 	v   *vcore.Instance
 }
 
-func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
+// sniff address remove google 80
+func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn, addr string) {
 	go func() {
 		buf := bytespool.Alloc(pool.BufSize)
 		_, err := io.CopyBuffer(N.WriteOnlyWriter{Writer: lhs}, N.ReadOnlyReader{Reader: rhs}, buf)
 		if err != nil {
-			fmt.Printf("relay: %s\n", err)
+			fmt.Printf("relay: lhs %s, %s\n", addr, err)
 		}
 		bytespool.Free(buf)
 		lhs.Close()
@@ -36,7 +37,7 @@ func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
 	// io.CopyBuffer(lhs, rhs, buf)
 	_, err := io.CopyBuffer(N.WriteOnlyWriter{Writer: rhs}, N.ReadOnlyReader{Reader: lhs}, buf)
 	if err != nil {
-		fmt.Printf("relay: %s\n", err)
+		fmt.Printf("relay: rhs %s, %s\n", addr, err)
 	}
 	bytespool.Free(buf)
 	lhs.Close()
@@ -58,6 +59,6 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	if err != nil {
 		return fmt.Errorf("dial V proxy connection failed: %v", err)
 	}
-	go h.relay(conn, c)
+	go h.relay(conn, c, target.String())
 	return nil
 }
