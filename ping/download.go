@@ -49,7 +49,7 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 	successCount := 0
 	linkCount := len(links)
 	var sum int64
-	nodes := make([]render.Node, linkCount)
+	nodes := make(render.Nodes, linkCount)
 	for count < linkCount {
 		select {
 		case traffic := <-trafficChan:
@@ -85,6 +85,7 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 
 	duration := web.FormatDuration(time.Since(start))
 	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original", "Asia/Shanghai", []byte{})
+	nodes.Sort("rspeed")
 	table, err := render.NewTableWithOption(nodes, &options)
 	if err != nil {
 		return err
