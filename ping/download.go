@@ -32,7 +32,7 @@ func testAll(ctx context.Context, links []string, max int, trafficChan chan<- in
 	return p.TestAll(ctx, links, max, trafficChan)
 }
 
-func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath string, testInfoChan chan<- TestResult) error {
+func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath string, language string, testInfoChan chan<- TestResult) error {
 	defer func() {
 		if testInfoChan != nil {
 			close(testInfoChan)
@@ -84,7 +84,7 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 	close(nodeChan)
 
 	duration := web.FormatDuration(time.Since(start))
-	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, "en", "original", "Asia/Shanghai", []byte{})
+	options := render.NewTableOptions(40, 30, 0.5, 0.5, 24, 0.5, fontPath, language, "original", "Asia/Shanghai", []byte{})
 	nodes.Sort("rspeed")
 	table, err := render.NewTableWithOption(nodes, &options)
 	if err != nil {
@@ -95,10 +95,10 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 	return nil
 }
 
-func RenderDownloadLinksSpeedAndroid(links []string, max int, fontPath string, pngPath string) <-chan TestResult {
+func RenderDownloadLinksSpeedAndroid(links []string, max int, fontPath string, pngPath string, language string) <-chan TestResult {
 	testInfoChan := make(chan TestResult)
 	go func(c chan<- TestResult) {
-		RenderDownloadLinksSpeed(links, max, fontPath, pngPath, c)
+		RenderDownloadLinksSpeed(links, max, fontPath, pngPath, language, c)
 	}(testInfoChan)
 	return testInfoChan
 }
