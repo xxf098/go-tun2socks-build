@@ -1341,12 +1341,12 @@ func BatchTestDownload(link string, concurrency int, testDownload TestDownload) 
 	return nil
 }
 
-func BatchRenderTestDownload(link string, concurrency int, fontPath string, pngPath string, language string, testDownload TestDownload) error {
+func BatchRenderTestDownload(link string, concurrency int, fontPath string, pngPath string, language string, urlGroup string, testDownload TestDownload) error {
 	if concurrency < 1 {
 		concurrency = 5
 	}
 	links := strings.Split(link, ",")
-	resultCh := ping.RenderDownloadLinksSpeedAndroid(links, concurrency, fontPath, pngPath, language)
+	resultCh := ping.RenderDownloadLinksSpeedAndroid(links, concurrency, fontPath, pngPath, language, urlGroup)
 	for r := range resultCh {
 		if r.Protocol == "speed" {
 			testDownload.UpdateSpeed(r.Index, r.Result)
