@@ -1321,7 +1321,7 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 			}
 		}
 	}()
-	return download.Download(link, 15*time.Second, 15*time.Second, c)
+	return download.DownloadRange(link, 2, 15*time.Second, 15*time.Second, c, nil)
 }
 
 func BatchTestDownload(link string, concurrency int, testDownload TestDownload) error {
