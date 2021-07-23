@@ -120,7 +120,7 @@ func runDownload(index int, link string, c chan<- TestResult) (bool, error) {
 			}
 		}
 	}()
-	speed, err := download.Download(link, 12*time.Second, 12*time.Second, trafficChan)
+	speed, err := download.Download(link, 12*time.Second, 12*time.Second, trafficChan, nil)
 	result := TestResult{
 		Result:   speed,
 		Index:    index,
