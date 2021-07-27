@@ -25,7 +25,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
-	"github.com/xxf098/go-tun2socks-build/trojan"
+	"github.com/xxf098/go-tun2socks-build/settings"
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	lconfig "github.com/xxf098/lite-proxy/config"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
@@ -526,9 +526,9 @@ func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig 
 	// 	ServerName: config.SNI,
 	// 	SkipVerify: config.SkipCertVerify,
 	// })
-	outboundsSettings, _ := json.Marshal(trojan.OutboundsSettings{
-		Servers: []*trojan.TrojanServerTarget{
-			&trojan.TrojanServerTarget{
+	outboundsSettings, _ := json.Marshal(settings.TrojanOutboundsSettings{
+		Servers: []*settings.TrojanServerTarget{
+			&settings.TrojanServerTarget{
 				Address:  config.Add,
 				Email:    "xxf098@github.com",
 				Level:    8,
@@ -553,6 +553,30 @@ func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig 
 		},
 	}
 	return trojanOutboundDetourConfig
+}
+
+func createShadowsocksOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
+	config := profile.Shadowsocks
+	outboundsSettings, _ := json.Marshal(settings.ShadowsocksOutboundsSettings{
+		Servers: []*settings.ShadowsocksServerTarget{
+			&settings.ShadowsocksServerTarget{
+				Address:  config.Add,
+				Method:   config.Method,
+				Email:    "xxf098@github.com",
+				Level:    0,
+				OTA:      false,
+				Password: config.Password,
+				Port:     uint16(config.Port),
+			},
+		},
+	})
+	outboundsSettingsMsg := json.RawMessage(outboundsSettings)
+	shadowsocksOutboundDetourConfig := conf.OutboundDetourConfig{
+		Protocol: "shadowsocks",
+		Tag:      "proxy",
+		Settings: &outboundsSettingsMsg,
+	}
+	return shadowsocksOutboundDetourConfig
 }
 
 func createFreedomOutboundDetourConfig(useIPv6 bool) conf.OutboundDetourConfig {
@@ -765,6 +789,20 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 }
 
 func toNameServerConfig(hostport string) *conf.NameServerConfig {
+	// doh
+	if strings.HasPrefix("https", hostport) {
+		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress(hostport)}}
+		return newConfig
+	}
+	if hostport == "8.8.8.8:53" {
+		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress("https://dns.google/dns-query")}}
+		return newConfig
+	}
+	if hostport == "1.1.1.1:53" {
+		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress("https://1.1.1.1/dns-query")}}
+		return newConfig
+	}
+
 	host, port, err := net.SplitHostPort(hostport)
 	if err != nil {
 		return nil

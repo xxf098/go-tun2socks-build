@@ -55,7 +55,8 @@ type Vmess struct {
 	Security string // vnext.Security
 	Protocol string
 	VmessOptions
-	Trojan *Trojan
+	Trojan      *Trojan
+	Shadowsocks *Shadowsocks
 }
 
 func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid int, Net string, ID string, Type string, Security string, opt []byte) *Vmess {

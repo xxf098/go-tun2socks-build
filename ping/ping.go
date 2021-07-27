@@ -14,6 +14,7 @@ const PROTOCOL_TRAFFIC = "traffic"
 
 type TestResult struct {
 	Result   int64
+	Elapse   int64
 	Server   string
 	Port     int
 	Index    int

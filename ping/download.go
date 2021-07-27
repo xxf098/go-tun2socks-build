@@ -3,6 +3,7 @@ package ping
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/xxf098/lite-proxy/download"
@@ -70,13 +71,17 @@ func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath 
 			if node.IsOk {
 				successCount += 1
 			}
-			testResult := TestResult{
-				Result:   node.MaxSpeed,
-				Index:    node.Id,
-				Protocol: PROTOCOL_SPEED,
-			}
+
+			p, _ := strconv.Atoi(node.Ping)
 			if testInfoChan != nil {
-				testInfoChan <- testResult
+				speedResult := TestResult{
+					Result:   node.MaxSpeed,
+					Elapse:   int64(p),
+					Index:    node.Id,
+					Protocol: PROTOCOL_SPEED,
+				}
+
+				testInfoChan <- speedResult
 			}
 			fmt.Printf("index: %d, elapse: %s, avg: %s, max: %s\n", node.Id, node.Ping, download.ByteCountIEC(node.AvgSpeed), download.ByteCountIEC(node.MaxSpeed))
 			count += 1

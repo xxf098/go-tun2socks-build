@@ -87,6 +87,7 @@ func newError(values ...interface{}) *verrors.Error {
 type VmessOptions features.VmessOptions
 type Trojan features.Trojan
 type Vmess features.Vmess
+type Shadowsocks features.Shadowsocks
 
 func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, opt []byte) *Trojan {
 	t := Trojan(*features.NewTrojan(Add, Port, Password, SNI, SkipCertVerify, opt))
@@ -102,7 +103,7 @@ func (t *Trojan) toVmess() *Vmess {
 	}
 }
 
-func NewShadowSocks(Add string, Port int, ID string, Security string, opt []byte) *Vmess {
+func NewLiteShadowSocks(Add string, Port int, ID string, Security string, opt []byte) *Vmess {
 	options := features.NewVmessOptions(opt)
 	return &Vmess{
 		Add:          Add,
@@ -112,6 +113,20 @@ func NewShadowSocks(Add string, Port int, ID string, Security string, opt []byte
 		Protocol:     SHADOWSOCKS,
 		VmessOptions: options,
 		Trojan:       nil,
+	}
+}
+
+func NewShadowSocks(Add string, Port int, Password string, Method string, opt []byte) *Shadowsocks {
+	ss := Shadowsocks(*features.NewShadowsocks(Add, Port, Password, Method, opt))
+	return &ss
+}
+
+func (ss *Shadowsocks) toVmess() *Vmess {
+	shadowsocks := features.Shadowsocks(*ss)
+	return &Vmess{
+		Protocol:     SHADOWSOCKS,
+		Shadowsocks:  &shadowsocks,
+		VmessOptions: ss.VmessOptions,
 	}
 }
 
@@ -128,6 +143,9 @@ func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
 	}
 	if profile.Protocol == TROJAN {
 		proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
+	}
+	if profile.Protocol == SHADOWSOCKS {
+		proxyOutboundConfig = createShadowsocksOutboundDetourConfig(profile)
 	}
 	return proxyOutboundConfig
 }
@@ -562,7 +580,7 @@ type TestLatency interface {
 }
 
 type TestDownload interface {
-	UpdateSpeed(id int, speed int64)
+	UpdateSpeed(id int, speed int64, elapse int64)
 	UpdateTraffic(id int, traffic int64)
 }
 
@@ -1096,6 +1114,18 @@ func StartTrojanTunFd(
 	return StartV2RayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
 }
 
+func StartShadowsocksTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	shadowsocks *Shadowsocks,
+	assetPath string) error {
+	profile := shadowsocks.toVmess()
+	// profile.VmessOptions.RouteMode = 3
+	return StartV2RayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
+}
+
 // StopV2Ray stop v2ray
 func StopV2Ray() {
 	isStopped = true
@@ -1332,7 +1362,7 @@ func BatchTestDownload(link string, concurrency int, testDownload TestDownload) 
 	resultCh := ping.DownloadLinksSpeed(links, concurrency)
 	for r := range resultCh {
 		if r.Protocol == ping.PROTOCOL_SPEED {
-			testDownload.UpdateSpeed(r.Index, r.Result)
+			testDownload.UpdateSpeed(r.Index, r.Result, r.Elapse)
 		}
 		if r.Protocol == ping.PROTOCOL_TRAFFIC {
 			testDownload.UpdateTraffic(r.Index, r.Result)
@@ -1348,10 +1378,10 @@ func BatchRenderTestDownload(link string, concurrency int, fontPath string, pngP
 	links := strings.Split(link, ",")
 	resultCh := ping.RenderDownloadLinksSpeedAndroid(links, concurrency, fontPath, pngPath, language, urlGroup)
 	for r := range resultCh {
-		if r.Protocol == "speed" {
-			testDownload.UpdateSpeed(r.Index, r.Result)
+		if r.Protocol == ping.PROTOCOL_SPEED {
+			testDownload.UpdateSpeed(r.Index, r.Result, r.Elapse)
 		}
-		if r.Protocol == "traffic" {
+		if r.Protocol == ping.PROTOCOL_SPEED {
 			testDownload.UpdateTraffic(r.Index, r.Result)
 		}
 	}
