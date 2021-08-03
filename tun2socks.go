@@ -1381,7 +1381,7 @@ func BatchRenderTestDownload(link string, concurrency int, fontPath string, pngP
 		if r.Protocol == ping.PROTOCOL_SPEED {
 			testDownload.UpdateSpeed(r.Index, r.Result, r.Elapse)
 		}
-		if r.Protocol == ping.PROTOCOL_SPEED {
+		if r.Protocol == ping.PROTOCOL_TRAFFIC {
 			testDownload.UpdateTraffic(r.Index, r.Result)
 		}
 	}
