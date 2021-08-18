@@ -802,6 +802,7 @@ func StartV2RayWithVmess(
 			return err
 		}
 		ctx := context.WithValue(context.Background(), "routeMode", profile.RouteMode)
+		ctx = context.WithValue(ctx, "disableDNSCache", profile.DisableDNSCache)
 		// Configure sniffing settings for traffic coming from tun2socks.
 		if profile.EnableSniffing || profile.RouteMode == 4 {
 			sniffingConfig := &vproxyman.SniffingConfig{
@@ -870,6 +871,7 @@ func StartV2RayWithTunFd(
 		return err
 	}
 	ctx := context.WithValue(context.Background(), "routeMode", profile.RouteMode)
+	ctx = context.WithValue(ctx, "disableDNSCache", profile.DisableDNSCache)
 	// Configure sniffing settings for traffic coming from tun2socks.
 	if profile.EnableSniffing || profile.RouteMode == 4 {
 		sniffingConfig := &vproxyman.SniffingConfig{
