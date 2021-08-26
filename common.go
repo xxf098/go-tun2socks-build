@@ -29,6 +29,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	lconfig "github.com/xxf098/lite-proxy/config"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
+	lutils "github.com/xxf098/lite-proxy/utils"
 )
 
 const (
@@ -150,7 +151,7 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 		return err
 	}
 	// remoteHost := "clients3.google.com"
-	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
+	httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36\r\n\r\n", remoteHost)
 	if _, err = fmt.Fprintf(*conn, httpRequest); err != nil {
 		return err
 	}
@@ -159,7 +160,7 @@ func send204Request(conn *net.Conn, timeout time.Duration) error {
 	if err != nil && err != io.EOF {
 		return err
 	}
-	httpResponse := string(buf[:n])
+	httpResponse := lutils.B2s(buf[:n])
 	if !strings.HasPrefix(httpResponse, "HTTP/1.1 204 No Content") {
 		return fmt.Errorf("error response: %s", httpResponse)
 	}
@@ -173,7 +174,7 @@ func sendCode204Request(conn *net.Conn, timeout time.Duration) error {
 	}
 	// remoteHost := "clients3.google.com"
 	// httpRequest := fmt.Sprintf("GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n", remoteHost)
-	httpRequest := "GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\r\n\r\n"
+	httpRequest := "GET /generate_204 HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36\r\n\r\n"
 	if _, err = fmt.Fprintf(*conn, httpRequest, remoteHost); err != nil {
 		return err
 	}
