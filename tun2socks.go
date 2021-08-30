@@ -579,6 +579,10 @@ type TestLatency interface {
 	UpdateLatency(id int, elapsed int64)
 }
 
+type TestLatencyStop interface {
+	UpdateLatency(id int, elapsed int64) bool
+}
+
 type TestDownload interface {
 	UpdateSpeed(id int, speed int64, elapse int64)
 	UpdateTraffic(id int, traffic int64)
@@ -1339,7 +1343,8 @@ func TestVmessDownload(profile *Vmess, timeout time.Duration, cb TestLatency) (i
 	return v2rayDownload(profile, 15*time.Second, c)
 }
 
-func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
+func TestLinkDownloadSpeed(link string, cb TestLatencyStop) (int64, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan int64)
 	go func() {
 		for {
@@ -1349,11 +1354,15 @@ func TestLinkDownloadSpeed(link string, cb TestLatency) (int64, error) {
 					return
 				}
 				// fmt.Println(download.ByteCountIEC(s))
-				cb.UpdateLatency(-1, s)
+				isStop := cb.UpdateLatency(-1, s)
+				if isStop {
+					cancel()
+					return
+				}
 			}
 		}
 	}()
-	return download.DownloadRange(link, 2, 15*time.Second, 15*time.Second, c, nil)
+	return download.DownloadRange(ctx, link, 2, 15*time.Second, 15*time.Second, c, nil)
 }
 
 func BatchTestDownload(link string, concurrency int, testDownload TestDownload) error {
