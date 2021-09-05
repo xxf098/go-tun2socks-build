@@ -6,17 +6,17 @@ require (
 	github.com/eycorsican/go-tun2socks v1.16.11
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/v2fly/v2ray-core/v4 v4.41.1
+	github.com/v2fly/v2ray-core/v4 v4.42.1
 	github.com/xtls/xray-core v1.4.2
 	github.com/xxf098/lite-proxy v0.0.0
 	golang.org/x/mobile v0.0.0-20210220033013-bdb1ca9a1e08
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 
 // replace with v2ray-core path
 replace (
-	github.com/v2fly/v2ray-core/v4 v4.41.1 => ../v2ray-core
+	github.com/v2fly/v2ray-core/v4 v4.42.1 => ../v2ray-core
 	github.com/xtls/xray-core v1.4.2 => ../xray-core
 	github.com/xxf098/lite-proxy v0.0.0 => ../lite-proxy
 )
