@@ -35,7 +35,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
-	github.com/pires/go-proxyproto v0.6.0 // indirect
+	github.com/pires/go-proxyproto v0.6.1 // indirect
 	github.com/refraction-networking/utls v0.0.0-20210713165636-0b2885c8c0d4 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/seiflotfy/cuckoofilter v0.0.0-20201222105146-bc6005554a0c // indirect
@@ -45,6 +45,8 @@ require (
 	github.com/xtaci/smux v1.5.15 // indirect
 	github.com/xtls/go v0.0.0-20201118062508-3632bf3b7499 // indirect
 	go.starlark.net v0.0.0-20210901212718-87f333178d59 // indirect
+	go4.org/intern v0.0.0-20210108033219-3eb7198706b2 // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20201222180813-1025295fd063 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
 	golang.org/x/mod v0.5.0 // indirect
@@ -58,6 +60,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e // indirect
 )
 
 // replace with v2ray-core path
