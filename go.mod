@@ -7,7 +7,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/v2fly/v2ray-core/v4 v4.43.0
-	github.com/xtls/xray-core v1.4.3
+	github.com/xtls/xray-core v1.4.5
 	github.com/xxf098/lite-proxy v0.0.0
 	golang.org/x/mobile v0.0.0-20210220033013-bdb1ca9a1e08
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
@@ -66,6 +66,6 @@ require (
 // replace with v2ray-core path
 replace (
 	github.com/v2fly/v2ray-core/v4 v4.43.0 => ../v2ray-core
-	github.com/xtls/xray-core v1.4.3 => ../xray-core
+	github.com/xtls/xray-core v1.4.5 => ../xray-core
 	github.com/xxf098/lite-proxy v0.0.0 => ../lite-proxy
 )
