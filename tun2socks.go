@@ -1132,6 +1132,18 @@ func StartShadowsocksTunFd(
 	return StartV2RayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
 }
 
+func StartXShadowsocksTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	shadowsocks *Shadowsocks,
+	assetPath string) error {
+	profile := shadowsocks.toVmess()
+	// profile.VmessOptions.RouteMode = 3
+	return StartXRayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
+}
+
 // StopV2Ray stop v2ray
 func StopV2Ray() {
 	isStopped = true
