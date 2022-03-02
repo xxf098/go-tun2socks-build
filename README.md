@@ -27,9 +27,4 @@ go get -d ./...
 # Build an AAR
 make android
 
-# Build a Framework (not test)
-make ios
-
-# Both
-make
 ```
