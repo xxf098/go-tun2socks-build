@@ -1368,7 +1368,9 @@ func TestLinkDownloadSpeed(link string, cb TestLatencyStop) (int64, error) {
 				// fmt.Println(download.ByteCountIEC(s))
 				isStop := cb.UpdateLatency(-1, s)
 				if isStop {
-					cancel()
+					if ctx.Err() == nil {
+						cancel()
+					}
 					return
 				}
 			}
