@@ -1,18 +1,19 @@
 package features
 
 type Vless struct {
-	TLS      string
-	Add      string
-	Port     int
-	Net      string
-	ID       string
-	Type     string // headerType
-	Security string // vnext.Security
-	Protocol string
+	TLS        string
+	Add        string
+	Port       int
+	Net        string
+	ID         string
+	Type       string // headerType
+	Encryption string // VlessUser.encryption
+	Flow       string // VlessUser.flow
+	Protocol   string
 	VmessOptions
 }
 
-func NewVless(Add string, Port int, Password string, TLS string, HeaderType string, Security string, ID string, Net string, opt []byte) *Vless {
+func NewVless(Add string, Port int, ID string, TLS string, HeaderType string, Encryption string, Net string, Flow string, opt []byte) *Vless {
 	options := NewVmessOptions(opt)
 	return &Vless{
 		TLS:          TLS,
@@ -21,7 +22,8 @@ func NewVless(Add string, Port int, Password string, TLS string, HeaderType stri
 		Net:          Net,
 		ID:           ID,
 		Type:         HeaderType,
-		Security:     Security,
+		Encryption:   Encryption,
+		Flow:         Flow,
 		Protocol:     "vless",
 		VmessOptions: options,
 	}

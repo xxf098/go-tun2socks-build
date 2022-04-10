@@ -44,17 +44,19 @@ func NewVmessOptions(opt []byte) VmessOptions {
 }
 
 type Vmess struct {
-	Host     string
-	Path     string
-	TLS      string
-	Add      string
-	Port     int
-	Aid      int
-	Net      string
-	ID       string
-	Type     string // headerType
-	Security string // vnext.Security
-	Protocol string
+	Host       string
+	Path       string
+	TLS        string
+	Add        string
+	Port       int
+	Aid        int
+	Net        string
+	ID         string
+	Type       string // headerType
+	Security   string // vnext.Security
+	Encryption string // VlessUser.encryption
+	Flow       string // VlessUser.flow
+	Protocol   string
 	VmessOptions
 	Trojan      *Trojan
 	Shadowsocks *Shadowsocks
