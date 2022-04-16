@@ -73,6 +73,29 @@ type OutboundsSettings struct {
 	Vnext          []Vnext `json:"vnext,omitempty"`
 	DomainStrategy string  `json:"domainStrategy,omitempty"`
 }
+
+type VlessUser struct {
+	Encryption string `json:"encryption"`
+	Flow       string `json:"flow"`
+	ID         string `json:"id"`
+	Level      int    `json:"level"`
+	Security   string `json:"security"`
+}
+
+type Vlessnext struct {
+	Address string      `json:"address"`
+	Port    int         `json:"port"`
+	Users   []VlessUser `json:"users"`
+}
+
+type VlessOutboundsSettings struct {
+	Vnext          []Vlessnext `json:"vnext,omitempty"`
+	DomainStrategy string      `json:"domainStrategy,omitempty"`
+}
+
+type TcpHeader struct {
+	Type string `json:"type,omitempty"`
+}
 type Headers struct {
 	Host string `json:"Host"`
 }
