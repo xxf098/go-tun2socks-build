@@ -11,10 +11,11 @@ type Vless struct {
 	Encryption string // VlessUser.encryption
 	Flow       string // VlessUser.flow
 	Protocol   string
+	Path       string // ws path
 	VmessOptions
 }
 
-func NewVless(Add string, Port int, ID string, TLS string, HeaderType string, Encryption string, Net string, Flow string, Security string, opt []byte) *Vless {
+func NewVless(Add string, Port int, ID string, TLS string, HeaderType string, Encryption string, Net string, Flow string, Security string, Path string, opt []byte) *Vless {
 	options := NewVmessOptions(opt)
 	return &Vless{
 		TLS:          TLS,
@@ -26,6 +27,7 @@ func NewVless(Add string, Port int, ID string, TLS string, HeaderType string, En
 		Encryption:   Encryption,
 		Flow:         Flow,
 		Security:     Security,
+		Path:         Path,
 		Protocol:     "vless",
 		VmessOptions: options,
 	}
