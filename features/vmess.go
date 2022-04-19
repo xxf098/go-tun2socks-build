@@ -56,6 +56,7 @@ type Vmess struct {
 	Security   string // vnext.Security
 	Encryption string // VlessUser.encryption
 	Flow       string // VlessUser.flow
+	SNI        string // tls sni
 	Protocol   string
 	VmessOptions
 	Trojan      *Trojan
