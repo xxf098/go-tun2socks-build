@@ -87,6 +87,7 @@ func newError(values ...interface{}) *verrors.Error {
 type VmessOptions features.VmessOptions
 type Trojan features.Trojan
 type Vmess features.Vmess
+type Vless features.Vless
 type Shadowsocks features.Shadowsocks
 
 func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, opt []byte) *Trojan {
@@ -100,6 +101,30 @@ func (t *Trojan) toVmess() *Vmess {
 		Protocol:     TROJAN,
 		Trojan:       &trojan,
 		VmessOptions: t.VmessOptions,
+	}
+}
+
+func NewVless(Add string, Port int, ID string, TLS string, HeaderType string, Encryption string, Net string, Flow string, Security string, Path string, Host string, SNI string, opt []byte) *Vless {
+	l := Vless(*features.NewVless(Add, Port, ID, TLS, HeaderType, Encryption, Net, Flow, Security, Path, Host, SNI, opt))
+	return &l
+}
+
+func (l *Vless) toVmess() *Vmess {
+	return &Vmess{
+		Add:          l.Add,
+		Port:         l.Port,
+		ID:           l.ID,
+		TLS:          l.TLS,
+		Net:          l.Net,
+		Type:         l.Type,
+		Encryption:   l.Encryption,
+		Security:     l.Security,
+		Flow:         l.Flow,
+		Path:         l.Path,
+		Host:         l.Host,
+		SNI:          l.SNI,
+		Protocol:     VLESS,
+		VmessOptions: l.VmessOptions,
 	}
 }
 
@@ -146,6 +171,9 @@ func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
 	}
 	if profile.Protocol == SHADOWSOCKS {
 		proxyOutboundConfig = createShadowsocksOutboundDetourConfig(profile)
+	}
+	if profile.Protocol == VLESS {
+		proxyOutboundConfig = createVlessOutboundDetourConfig(profile)
 	}
 	return proxyOutboundConfig
 }
@@ -1120,6 +1148,17 @@ func StartTrojanTunFd(
 	return StartV2RayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
 }
 
+func StartXTrojanTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	trojan *Trojan,
+	assetPath string) error {
+	profile := trojan.toVmess()
+	return StartXRayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
+}
+
 func StartShadowsocksTunFd(
 	tunFd int,
 	vpnService VpnService,
@@ -1140,6 +1179,18 @@ func StartXShadowsocksTunFd(
 	shadowsocks *Shadowsocks,
 	assetPath string) error {
 	profile := shadowsocks.toVmess()
+	// profile.VmessOptions.RouteMode = 3
+	return StartXRayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
+}
+
+func StartXVlessTunFd(
+	tunFd int,
+	vpnService VpnService,
+	logService LogService,
+	querySpeed QuerySpeed,
+	vl *Vless,
+	assetPath string) error {
+	profile := vl.toVmess()
 	// profile.VmessOptions.RouteMode = 3
 	return StartXRayWithTunFd(tunFd, vpnService, logService, querySpeed, profile, assetPath)
 }
