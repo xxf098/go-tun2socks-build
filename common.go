@@ -13,15 +13,16 @@ import (
 	"strings"
 	"time"
 
-	vcore "github.com/v2fly/v2ray-core/v4"
-	vproxyman "github.com/v2fly/v2ray-core/v4/app/proxyman"
-	verrors "github.com/v2fly/v2ray-core/v4/common/errors"
-	vnet "github.com/v2fly/v2ray-core/v4/common/net"
-	vsession "github.com/v2fly/v2ray-core/v4/common/session"
-	vinbound "github.com/v2fly/v2ray-core/v4/features/inbound"
-	"github.com/v2fly/v2ray-core/v4/infra/conf"
-	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
-	json_reader "github.com/v2fly/v2ray-core/v4/infra/conf/json"
+	vproxyman "github.com/xtls/xray-core/app/proxyman"
+	verrors "github.com/xtls/xray-core/common/errors"
+	vnet "github.com/xtls/xray-core/common/net"
+	vsession "github.com/xtls/xray-core/common/session"
+	vcore "github.com/xtls/xray-core/core"
+	vinbound "github.com/xtls/xray-core/features/inbound"
+	"github.com/xtls/xray-core/infra/conf"
+
+	// "github.com/xtls/xray-core/infra/conf/cfgcommon"
+	json_reader "github.com/xtls/xray-core/infra/conf/json"
 	"github.com/xxf098/go-tun2socks-build/features"
 	"github.com/xxf098/go-tun2socks-build/ping"
 	"github.com/xxf098/go-tun2socks-build/pool"
@@ -368,11 +369,11 @@ func createInboundDetourConfig(proxyPort uint32) conf.InboundDetourConfig {
 	})
 	inboundsSettingsMsg := json.RawMessage(inboundsSettings)
 	inboundDetourConfig := conf.InboundDetourConfig{
-		Tag:       "socks-in",
-		Protocol:  "socks",
-		PortRange: &cfgcommon.PortRange{From: proxyPort, To: proxyPort},
-		ListenOn:  &cfgcommon.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
-		Settings:  &inboundsSettingsMsg,
+		Tag:      "socks-in",
+		Protocol: "socks",
+		PortList: &conf.PortList{Range: []conf.PortRange{conf.PortRange{From: proxyPort, To: proxyPort}}},
+		ListenOn: &conf.Address{vnet.IPAddress([]byte{127, 0, 0, 1})},
+		Settings: &inboundsSettingsMsg,
 	}
 	return inboundDetourConfig
 }
@@ -433,7 +434,7 @@ func createVmessOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig {
 		}
 		if profile.Host != "" {
 			hosts := strings.Split(profile.Host, ",")
-			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = cfgcommon.NewStringList(hosts)
+			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = conf.NewStringList(hosts)
 		}
 	}
 
@@ -570,7 +571,7 @@ func configVmessTransport(profile *Vmess, outboundsSettingsMsg1 json.RawMessage)
 		}
 		if profile.Host != "" {
 			hosts := strings.Split(profile.Host, ",")
-			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = cfgcommon.NewStringList(hosts)
+			vmessOutboundDetourConfig.StreamSetting.HTTPSettings.Host = conf.NewStringList(hosts)
 		}
 	}
 
@@ -954,7 +955,7 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 		}
 	}
 	return &conf.DNSConfig{
-		Hosts:   v2ray.BlockHosts,
+		Hosts:   &conf.HostsWrapper{Hosts: v2ray.BlockHosts},
 		Servers: nameServerConfig,
 	}
 }
@@ -962,15 +963,15 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 func toNameServerConfig(hostport string) *conf.NameServerConfig {
 	// doh
 	if strings.HasPrefix("https", hostport) {
-		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress(hostport)}}
+		newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(hostport)}}
 		return newConfig
 	}
 	if hostport == "8.8.8.8:53" {
-		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress("https://dns.google/dns-query")}}
+		newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress("https://dns.google/dns-query")}}
 		return newConfig
 	}
 	if hostport == "1.1.1.1:53" {
-		newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress("https://1.1.1.1/dns-query")}}
+		newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress("https://1.1.1.1/dns-query")}}
 		return newConfig
 	}
 
@@ -982,7 +983,7 @@ func toNameServerConfig(hostport string) *conf.NameServerConfig {
 	if err != nil {
 		return nil
 	}
-	newConfig := &conf.NameServerConfig{Address: &cfgcommon.Address{vnet.ParseAddress(host)}, Port: uint16(p)}
+	newConfig := &conf.NameServerConfig{Address: &conf.Address{vnet.ParseAddress(host)}, Port: uint16(p)}
 	return newConfig
 }
 

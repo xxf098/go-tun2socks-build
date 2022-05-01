@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	vbytespool "github.com/v2fly/v2ray-core/v4/common/bytespool"
+	vbytespool "github.com/xtls/xray-core/common/bytespool"
 )
 
 const BufSize = 20 * 1024

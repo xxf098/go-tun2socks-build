@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
-	vcore "github.com/v2fly/v2ray-core/v4"
-	vsession "github.com/v2fly/v2ray-core/v4/common/session"
-	vsignal "github.com/v2fly/v2ray-core/v4/common/signal"
-	vtask "github.com/v2fly/v2ray-core/v4/common/task"
+	vsession "github.com/xtls/xray-core/common/session"
+	vsignal "github.com/xtls/xray-core/common/signal"
+	vtask "github.com/xtls/xray-core/common/task"
+	vcore "github.com/xtls/xray-core/core"
 
 	"github.com/eycorsican/go-tun2socks/common/log"
 	"github.com/eycorsican/go-tun2socks/core"
-	"github.com/v2fly/v2ray-core/v4/common/bytespool"
+	"github.com/xtls/xray-core/common/bytespool"
 	"github.com/xxf098/go-tun2socks-build/pool"
 )
 

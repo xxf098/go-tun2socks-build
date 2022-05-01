@@ -1,5 +1,6 @@
 package v2ray
 
+/*
 import (
 	// The following are necessary as they register handlers in their init functions.
 
@@ -78,3 +79,4 @@ import (
 	// _ "github.com/v2fly/v2ray-core/v4/infra/conf/geodata/memconservative"
 	_ "github.com/v2fly/v2ray-core/v4/infra/conf/geodata/standard"
 )
+*/

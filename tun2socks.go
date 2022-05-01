@@ -16,17 +16,18 @@ import (
 	"syscall"
 	"time"
 
-	vcore "github.com/v2fly/v2ray-core/v4"
-	vproxyman "github.com/v2fly/v2ray-core/v4/app/proxyman"
-	vbytespool "github.com/v2fly/v2ray-core/v4/common/bytespool"
-	verrors "github.com/v2fly/v2ray-core/v4/common/errors"
-	vnet "github.com/v2fly/v2ray-core/v4/common/net"
-	v2filesystem "github.com/v2fly/v2ray-core/v4/common/platform/filesystem"
-	v2stats "github.com/v2fly/v2ray-core/v4/features/stats"
-	"github.com/v2fly/v2ray-core/v4/infra/conf"
-	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
-	v2serial "github.com/v2fly/v2ray-core/v4/infra/conf/serial"
-	vinternet "github.com/v2fly/v2ray-core/v4/transport/internet"
+	vproxyman "github.com/xtls/xray-core/app/proxyman"
+	vbytespool "github.com/xtls/xray-core/common/bytespool"
+	verrors "github.com/xtls/xray-core/common/errors"
+	vnet "github.com/xtls/xray-core/common/net"
+	v2filesystem "github.com/xtls/xray-core/common/platform/filesystem"
+	vcore "github.com/xtls/xray-core/core"
+	v2stats "github.com/xtls/xray-core/features/stats"
+	"github.com/xtls/xray-core/infra/conf"
+
+	// "github.com/xtls/xray-core/infra/conf/cfgcommon"
+	v2serial "github.com/xtls/xray-core/infra/conf/serial"
+	vinternet "github.com/xtls/xray-core/transport/internet"
 	mobasset "golang.org/x/mobile/asset"
 
 	xbytespool "github.com/xtls/xray-core/common/bytespool"
@@ -497,7 +498,7 @@ func loadVmessTestConfig(profile *Vmess, port uint32) (*conf.Config, error) {
 	jsonConfig.DNSConfig = &conf.DNSConfig{
 		Servers: []*conf.NameServerConfig{
 			&conf.NameServerConfig{
-				Address: &cfgcommon.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
+				Address: &conf.Address{vnet.IPAddress([]byte{223, 5, 5, 5})},
 				Port:    53,
 			},
 		},
@@ -538,8 +539,8 @@ func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error)
 }
 
 func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
-	fProfile := features.Vmess(*profile)
-	config, err := xray.LoadXVmessConfig(&fProfile)
+	// fProfile := features.Vmess(*profile)
+	config, err := loadVmessConfig(profile)
 	if err != nil {
 		return nil, err
 	}

@@ -6,12 +6,12 @@ import (
 	"io"
 	"net"
 
-	vcore "github.com/v2fly/v2ray-core/v4"
-	vnet "github.com/v2fly/v2ray-core/v4/common/net"
-	vsession "github.com/v2fly/v2ray-core/v4/common/session"
+	vnet "github.com/xtls/xray-core/common/net"
+	vsession "github.com/xtls/xray-core/common/session"
+	vcore "github.com/xtls/xray-core/core"
 
 	"github.com/eycorsican/go-tun2socks/core"
-	"github.com/v2fly/v2ray-core/v4/common/bytespool"
+	"github.com/xtls/xray-core/common/bytespool"
 	"github.com/xxf098/go-tun2socks-build/pool"
 	N "github.com/xxf098/lite-proxy/common/net"
 )

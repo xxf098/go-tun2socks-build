@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net"
 
-	vcore "github.com/v2fly/v2ray-core/v4"
-	vnet "github.com/v2fly/v2ray-core/v4/common/net"
+	vnet "github.com/xtls/xray-core/common/net"
+	vcore "github.com/xtls/xray-core/core"
 )
 
 type VmessOptions struct {

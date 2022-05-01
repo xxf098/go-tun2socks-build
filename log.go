@@ -1,9 +1,9 @@
 package tun2socks
 
 import (
-	alog "github.com/v2fly/v2ray-core/v4/app/log"
-	"github.com/v2fly/v2ray-core/v4/common"
-	vcommonlog "github.com/v2fly/v2ray-core/v4/common/log"
+	alog "github.com/xtls/xray-core/app/log"
+	"github.com/xtls/xray-core/common"
+	vcommonlog "github.com/xtls/xray-core/common/log"
 )
 
 type LogService interface {

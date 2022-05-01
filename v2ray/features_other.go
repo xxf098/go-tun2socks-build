@@ -1,7 +1,9 @@
+//go:build !ios && !android
 // +build !ios,!android
 
 package v2ray
 
+/*
 import (
 	_ "github.com/v2fly/v2ray-core/v4/app/commander"
 	_ "github.com/v2fly/v2ray-core/v4/app/log/command"
@@ -12,3 +14,4 @@ import (
 
 	_ "github.com/v2fly/v2ray-core/v4/transport/internet/domainsocket"
 )
+*/
