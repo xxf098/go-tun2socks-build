@@ -73,12 +73,12 @@ const (
 
 type errPathObjHolder struct{}
 
-const (
-	VMESS       string = "vmess"
-	VLESS       string = "vless"
-	TROJAN      string = "trojan"
-	SHADOWSOCKS string = "shadowsocks"
-)
+// const (
+// 	VMESS       string = "vmess"
+// 	VLESS       string = "vless"
+// 	TROJAN      string = "trojan"
+// 	SHADOWSOCKS string = "shadowsocks"
+// )
 
 func newError(values ...interface{}) *verrors.Error {
 	return verrors.New(values...).WithPathObj(errPathObjHolder{})
@@ -98,7 +98,7 @@ func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify
 func (t *Trojan) toVmess() *Vmess {
 	trojan := features.Trojan(*t)
 	return &Vmess{
-		Protocol:     TROJAN,
+		Protocol:     v2ray.TROJAN,
 		Trojan:       &trojan,
 		VmessOptions: t.VmessOptions,
 	}
@@ -123,7 +123,7 @@ func (l *Vless) toVmess() *Vmess {
 		Path:         l.Path,
 		Host:         l.Host,
 		SNI:          l.SNI,
-		Protocol:     VLESS,
+		Protocol:     v2ray.VLESS,
 		VmessOptions: l.VmessOptions,
 	}
 }
@@ -135,7 +135,7 @@ func NewLiteShadowSocks(Add string, Port int, ID string, Security string, opt []
 		Port:         Port,
 		ID:           ID,
 		Security:     Security,
-		Protocol:     SHADOWSOCKS,
+		Protocol:     v2ray.SHADOWSOCKS,
 		VmessOptions: options,
 		Trojan:       nil,
 	}
@@ -149,7 +149,7 @@ func NewShadowSocks(Add string, Port int, Password string, Method string, opt []
 func (ss *Shadowsocks) toVmess() *Vmess {
 	shadowsocks := features.Shadowsocks(*ss)
 	return &Vmess{
-		Protocol:     SHADOWSOCKS,
+		Protocol:     v2ray.SHADOWSOCKS,
 		Shadowsocks:  &shadowsocks,
 		VmessOptions: ss.VmessOptions,
 	}
@@ -163,16 +163,16 @@ func NewVmess(Host string, Path string, TLS string, Add string, Port int, Aid in
 
 func (profile *Vmess) getProxyOutboundDetourConfig() conf.OutboundDetourConfig {
 	proxyOutboundConfig := conf.OutboundDetourConfig{}
-	if profile.Protocol == VMESS {
+	if profile.Protocol == v2ray.VMESS {
 		proxyOutboundConfig = createVmessOutboundDetourConfig(profile)
 	}
-	if profile.Protocol == TROJAN {
+	if profile.Protocol == v2ray.TROJAN {
 		proxyOutboundConfig = createTrojanOutboundDetourConfig(profile)
 	}
-	if profile.Protocol == SHADOWSOCKS {
+	if profile.Protocol == v2ray.SHADOWSOCKS {
 		proxyOutboundConfig = createShadowsocksOutboundDetourConfig(profile)
 	}
-	if profile.Protocol == VLESS {
+	if profile.Protocol == v2ray.VLESS {
 		proxyOutboundConfig = createVlessOutboundDetourConfig(profile)
 	}
 	return proxyOutboundConfig
@@ -538,7 +538,8 @@ func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error)
 }
 
 func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
-	config, err := loadVmessConfig(profile)
+	fProfile := features.Vmess(*profile)
+	config, err := xray.LoadXVmessConfig(&fProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -567,11 +568,11 @@ func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
 
 func startLiteInstance(profile *Vmess) (loutbound.Dialer, error) {
 	switch profile.Protocol {
-	case VMESS:
+	case v2ray.VMESS:
 		return vmess2Lite(profile)
-	case TROJAN:
+	case v2ray.TROJAN:
 		return trojan2Lite(profile)
-	case SHADOWSOCKS:
+	case v2ray.SHADOWSOCKS:
 		return ss2Lite(profile)
 	default:
 		return nil, newError("not supported protocol")
@@ -1567,7 +1568,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		vmess.Net = string(*outboundConfig.StreamSetting.Network)
 	}
 	if outboundConfig.Protocol == "vmess" {
-		vmess.Protocol = VMESS
+		vmess.Protocol = v2ray.VMESS
 		vmessOutboundConfig, ok := rawConfig.(*conf.VMessOutboundConfig)
 		if !ok {
 			return nil, newError("Not A VMess Config")
@@ -1590,7 +1591,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		if !ok {
 			return nil, newError("Not A VLess Config")
 		}
-		vmess.Protocol = VLESS
+		vmess.Protocol = v2ray.VLESS
 		for _, vnext := range vlessOutboundConfig.Vnext {
 			vmess.Add = vnext.Address.String()
 			vmess.Port = int(vnext.Port)

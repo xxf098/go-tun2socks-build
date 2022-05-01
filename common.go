@@ -531,7 +531,7 @@ func configVmessTransport(profile *Vmess, outboundsSettingsMsg1 json.RawMessage)
 		Network:  &tcp,
 		Security: "",
 	}
-	if profile.Protocol == VLESS {
+	if profile.Protocol == v2ray.VLESS {
 		tcpHeader, _ := json.Marshal(v2ray.TcpHeader{Type: profile.Type})
 		tcpHeaderMsg := json.RawMessage(tcpHeader)
 		tcpSetting := &conf.TCPConfig{
@@ -546,7 +546,7 @@ func configVmessTransport(profile *Vmess, outboundsSettingsMsg1 json.RawMessage)
 		Settings:      &outboundsSettingsMsg1,
 		StreamSetting: streamSetting,
 	}
-	if profile.Protocol == VLESS {
+	if profile.Protocol == v2ray.VLESS {
 		vmessOutboundDetourConfig.Protocol = "vless"
 	}
 
@@ -1066,7 +1066,7 @@ func runCore(index int, link string, c chan<- ping.TestResult) (bool, error) {
 		option.AidInt,
 		option.Net,
 		option.ID,
-		VMESS,
+		v2ray.VMESS,
 		option.Security,
 		[]byte{})
 	elapse, err := TestVmessLatency(profile, -1)
@@ -1106,7 +1106,7 @@ func ss2Lite(profile *Vmess) (loutbound.Dialer, error) {
 }
 
 func profile2Option(profile *Vmess) (interface{}, error) {
-	if profile.Protocol == VMESS {
+	if profile.Protocol == v2ray.VMESS {
 		aidRaw, _ := json.Marshal(profile.Aid)
 		portRaw, _ := json.Marshal(profile.Port)
 		c := &lconfig.VmessConfig{
@@ -1124,7 +1124,7 @@ func profile2Option(profile *Vmess) (interface{}, error) {
 		}
 		return lconfig.VmessConfigToVmessOption(c)
 	}
-	if profile.Protocol == SHADOWSOCKS {
+	if profile.Protocol == v2ray.SHADOWSOCKS {
 		opt := &loutbound.ShadowSocksOption{
 			Server:   profile.Add,
 			Port:     profile.Port,

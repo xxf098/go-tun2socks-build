@@ -1,5 +1,12 @@
 package v2ray
 
+const (
+	VMESS       string = "vmess"
+	VLESS       string = "vless"
+	TROJAN      string = "trojan"
+	SHADOWSOCKS string = "shadowsocks"
+)
+
 type VmessConfig struct {
 	DNS       DNS         `json:"dns"`
 	Inbounds  []Inbounds  `json:"inbounds,omitempty"`
