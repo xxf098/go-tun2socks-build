@@ -34,7 +34,6 @@ import (
 	xsession "github.com/xtls/xray-core/common/session"
 	xcore "github.com/xtls/xray-core/core"
 	x2stats "github.com/xtls/xray-core/features/stats"
-	xserial "github.com/xtls/xray-core/infra/conf/serial"
 	xinternet "github.com/xtls/xray-core/transport/internet"
 
 	"github.com/eycorsican/go-tun2socks/core"
@@ -540,16 +539,16 @@ func startInstance(profile *Vmess, config *conf.Config) (*vcore.Instance, error)
 
 func startXRayInstance(profile *Vmess) (*xcore.Instance, error) {
 	// fProfile := features.Vmess(*profile)
-	config, err := loadVmessConfig(profile)
+	jsonConfig, err := loadVmessConfig(profile)
 	if err != nil {
 		return nil, err
 	}
-	config.DNSConfig = nil
-	b, err := json.Marshal(config)
-	if err != nil {
-		return nil, err
-	}
-	jsonConfig, err := xserial.DecodeJSONConfig(bytes.NewReader(b))
+	// config.DNSConfig = nil
+	// b, err := json.Marshal(config)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// jsonConfig, err := xserial.DecodeJSONConfig(bytes.NewReader(b))
 	jsonConfig.DNSConfig = xray.CreateDNSConfig(profile.VmessOptions)
 	pbConfig, err := jsonConfig.Build()
 	if err != nil {
