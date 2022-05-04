@@ -31,6 +31,7 @@ var BlockHosts = map[string]*conf.HostAddress{
 	// "domain:umsns.com":    localhost,
 	// "domain:qhupdate.com": localhost,
 	// "domain:qhimg.com":    localhost,
+	"go-updater.brave.com": localhost,
 	"at3.doubanio.com":     localhost,
 	"p.pinduoduo.com":      localhost,
 	"domain:googleapis.cn": google,

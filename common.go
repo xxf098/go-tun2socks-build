@@ -943,9 +943,9 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 	if routeMode == 2 || routeMode == 3 || routeMode == 4 {
 		for i := len(dns) - 1; i >= 0; i-- {
 			if newConfig := toNameServerConfig(dns[i]); newConfig != nil {
-				// if i == 1 {
-				// 	newConfig.Domains = []string{"geosite:cn"}
-				// }
+				if i == 1 {
+					newConfig.Domains = []string{"geosite:cn"}
+				}
 				nameServerConfig = append(nameServerConfig, newConfig)
 			}
 		}

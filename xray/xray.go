@@ -40,7 +40,8 @@ func CreateDNSConfig(option features.VmessOptions) *conf.DNSConfig {
 	dns := strings.Split(dnsConf, ",")
 	nameServerConfig := []*conf.NameServerConfig{}
 	if routeMode == 2 || routeMode == 3 || routeMode == 4 {
-		for i := len(dns) - 1; i >= 0; i-- {
+		// for i := len(dns) - 1; i >= 0; i-- {
+		for i := 0; i < len(dns); i++ {
 			if newConfig := toNameServerConfig(dns[i]); newConfig != nil {
 				if i == 1 {
 					newConfig.Domains = []string{"geosite:cn"}
