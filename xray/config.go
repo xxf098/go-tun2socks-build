@@ -12,7 +12,7 @@ import (
 )
 
 var localhost = conf.NewHostAddress(&conf.Address{net.IPAddress([]byte{0, 0, 0, 0})}, nil)
-var google = conf.NewHostAddress(&conf.Address{net.DomainAddress("googleapis.com")}, nil)
+var googleapis = conf.NewHostAddress(&conf.Address{net.DomainAddress("googleapis.com")}, nil)
 
 var BlockHosts = map[string]*conf.HostAddress{
 	// "domain:umeng.com": localhost,
@@ -38,7 +38,10 @@ var BlockHosts = map[string]*conf.HostAddress{
 	// "domain:qhimg.com":    localhost,
 	"at3.doubanio.com":     localhost,
 	"p.pinduoduo.com":      localhost,
-	"domain:googleapis.cn": google,
+	"pos.baidu.com":        localhost,
+	"hm.baidu.com":         localhost,
+	"cpro.baidu.com":       localhost,
+	"domain:googleapis.cn": googleapis,
 }
 
 func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
@@ -152,7 +155,7 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 	googleAPI, _ := json.Marshal(v2ray.Rules{
 		Type:        "field",
 		OutboundTag: "proxy",
-		Domain:      []string{"domain:googleapis.cn", "domain:gstatic.com", "domain:ampproject.org"},
+		Domain:      []string{"domain:googleapis.cn", "domain:gstatic.com", "domain:ampproject.org", "domain:google.com.hk"},
 	})
 	rules := []json.RawMessage{}
 	if routeMode == 1 {
@@ -386,11 +389,11 @@ func createVlessOutboundDetourConfig(profile *features.Vmess) conf.OutboundDetou
 func createVmessOutboundDetourConfig(profile *features.Vmess) conf.OutboundDetourConfig {
 	outboundsSettings1, _ := json.Marshal(v2ray.OutboundsSettings{
 		Vnext: []v2ray.Vnext{
-			v2ray.Vnext{
+			{
 				Address: profile.Add,
 				Port:    profile.Port,
 				Users: []v2ray.Users{
-					v2ray.Users{
+					{
 						AlterID:  profile.Aid,
 						Email:    "xxf098@github.com",
 						ID:       profile.ID,
@@ -416,7 +419,7 @@ func createTrojanOutboundDetourConfig(profile *features.Vmess) conf.OutboundDeto
 	// })
 	outboundsSettings, _ := json.Marshal(settings.TrojanOutboundsSettings{
 		Servers: []*settings.TrojanServerTarget{
-			&settings.TrojanServerTarget{
+			{
 				Address:  config.Add,
 				Email:    "xxf098@github.com",
 				Level:    8,
@@ -447,7 +450,7 @@ func createShadowsocksOutboundDetourConfig(profile *features.Vmess) conf.Outboun
 	config := profile.Shadowsocks
 	outboundsSettings, _ := json.Marshal(settings.ShadowsocksOutboundsSettings{
 		Servers: []*settings.ShadowsocksServerTarget{
-			&settings.ShadowsocksServerTarget{
+			{
 				Address:  config.Add,
 				Method:   config.Method,
 				Email:    "xxf098@github.com",
@@ -505,7 +508,7 @@ func creatPolicyConfig() *conf.PolicyConfig {
 	uplinkOnly := uint32(1)
 	return &conf.PolicyConfig{
 		Levels: map[uint32]*conf.Policy{
-			8: &conf.Policy{
+			8: {
 				ConnectionIdle: &connIdle,
 				DownlinkOnly:   &downlinkOnly,
 				Handshake:      &handshake,

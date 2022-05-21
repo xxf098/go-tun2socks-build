@@ -998,6 +998,14 @@ func StartXRayWithTunFd(
 		content = new(xsession.Content)
 		ctx = xsession.ContextWithContent(ctx, content)
 	}
+	// Configure sniffing settings for traffic coming from tun2socks.
+	if profile.EnableSniffing || profile.RouteMode == 4 {
+		sniffingConfig := &vproxyman.SniffingConfig{
+			Enabled:             true,
+			DestinationOverride: strings.Split("tls,http", ","),
+		}
+		ctx = contextWithSniffingConfig(ctx, sniffingConfig)
+	}
 	// Register tun2socks connection handlers.
 	core.RegisterTCPConnHandler(xray.NewTCPHandler(ctx, x))
 	core.RegisterUDPConnHandler(xray.NewUDPHandler(ctx, x, 3*time.Minute))
