@@ -1385,7 +1385,18 @@ func TestVmessLatency(profile *Vmess, port int) (int64, error) {
 	if proxyPort == 0 {
 		return testLatencyWithHTTP(server)
 	} else {
-		return testLatencyWithSocks5("127.0.0.1", proxyPort)
+		c := make(chan latencyResult, 1)
+		go func() {
+			elapsed, err := testLatencyWithSocks5("127.0.0.1", proxyPort)
+			c <- latencyResult{elapsed, err}
+		}()
+		select {
+		case r := <-c:
+			return r.elapsed, r.err
+		case <-time.After(time.Second * 8):
+			return 0, fmt.Errorf("test profile timeout")
+		}
+		// return testLatencyWithSocks5("127.0.0.1", proxyPort)
 	}
 }
 
