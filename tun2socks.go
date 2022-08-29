@@ -50,6 +50,7 @@ import (
 	loutbound "github.com/xxf098/lite-proxy/outbound"
 	"github.com/xxf098/lite-proxy/request"
 	lDialer "github.com/xxf098/lite-proxy/transport/dialer"
+	"github.com/xxf098/lite-proxy/web"
 )
 
 var localDNS = "223.5.5.5:53"
@@ -1665,4 +1666,13 @@ func Resolve(addr string, enableIPv6 bool, hostname string) (string, error) {
 		return "", err
 	}
 	return ip.String(), nil
+}
+
+// convert clash file to vmess/trojan links, links are separated by newline(\n)
+func ParseClash(message string) (string, error) {
+	links, err := web.ParseLinks(message)
+	if err != nil {
+		return "", err
+	}
+	return strings.Join(links, "\n"), nil
 }
