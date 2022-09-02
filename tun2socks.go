@@ -1676,3 +1676,19 @@ func ParseClash(message string) (string, error) {
 	}
 	return strings.Join(links, "\n"), nil
 }
+
+// get top n links of clash file
+func PeekClash(message string, n int) (string, error) {
+	links, err := web.PeekClash(message, 2)
+	if err != nil {
+		links, err = web.ParseLinks(message)
+		if err != nil {
+			return "", err
+		}
+	}
+	endIndex := n
+	if endIndex > len(links) {
+		endIndex = len(links)
+	}
+	return strings.Join(links[:endIndex], "\n"), nil
+}
