@@ -30,7 +30,7 @@ func testAll(ctx context.Context, links []string, max int, trafficChan chan<- in
 		},
 	}
 
-	return p.TestAll(ctx, links, max, trafficChan)
+	return p.TestAll(ctx, trafficChan)
 }
 
 func RenderDownloadLinksSpeed(links []string, max int, fontPath string, pngPath string, language string, urlGroup string, testInfoChan chan<- TestResult) error {
