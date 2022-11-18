@@ -91,8 +91,8 @@ type Vmess features.Vmess
 type Vless features.Vless
 type Shadowsocks features.Shadowsocks
 
-func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, opt []byte) *Trojan {
-	t := Trojan(*features.NewTrojan(Add, Port, Password, SNI, SkipCertVerify, opt))
+func NewTrojan(Add string, Port int, Password string, SNI string, SkipCertVerify bool, Net string, Path string, Host string, opt []byte) *Trojan {
+	t := Trojan(*features.NewTrojan(Add, Port, Password, SNI, SkipCertVerify, Net, Path, Host, opt))
 	return &t
 }
 

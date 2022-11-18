@@ -711,18 +711,35 @@ func createTrojanOutboundDetourConfig(profile *Vmess) conf.OutboundDetourConfig 
 	})
 	outboundsSettingsMsg := json.RawMessage(outboundsSettings)
 	transportProtocol := conf.TransportProtocol("tcp")
-	trojanOutboundDetourConfig := conf.OutboundDetourConfig{
-		Protocol: "trojan",
-		Tag:      "proxy",
-		Settings: &outboundsSettingsMsg,
-		StreamSetting: &conf.StreamConfig{
+	streamSetting := &conf.StreamConfig{
+		Security: "tls",
+		Network:  &transportProtocol,
+		TLSSettings: &conf.TLSConfig{
+			Insecure:   config.SkipCertVerify,
+			ServerName: config.SNI,
+		},
+	}
+	if config.Net == "ws" {
+		transportProtocol := conf.TransportProtocol(config.Net)
+		streamSetting = &conf.StreamConfig{
 			Security: "tls",
 			Network:  &transportProtocol,
 			TLSSettings: &conf.TLSConfig{
 				Insecure:   config.SkipCertVerify,
 				ServerName: config.SNI,
 			},
-		},
+			WSSettings: &conf.WebSocketConfig{Path: config.Path},
+		}
+		if len(config.Host) < 1 {
+			config.Host = config.SNI
+		}
+		streamSetting.WSSettings.Headers = map[string]string{"Host": config.Host}
+	}
+	trojanOutboundDetourConfig := conf.OutboundDetourConfig{
+		Protocol:      "trojan",
+		Tag:           "proxy",
+		Settings:      &outboundsSettingsMsg,
+		StreamSetting: streamSetting,
 	}
 	return trojanOutboundDetourConfig
 }
@@ -1135,4 +1152,9 @@ func profile2Option(profile *Vmess) (interface{}, error) {
 		return opt, nil
 	}
 	return nil, newError("not support protocol")
+}
+
+type latencyResult struct {
+	elapsed int64
+	err     error
 }
