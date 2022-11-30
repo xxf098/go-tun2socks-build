@@ -64,5 +64,6 @@ require (
 replace (
 	// github.com/v2fly/v2ray-core/v4 v4.43.0 => ../v2ray-core
 	github.com/xtls/xray-core v1.6.3 => ../xray-core
+	// git clone https://github.com/xxf098/LiteSpeedTest.git lite-proxy
 	github.com/xxf098/lite-proxy v0.0.0 => ../lite-proxy
 )
