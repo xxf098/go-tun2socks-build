@@ -1670,7 +1670,8 @@ func Resolve(addr string, enableIPv6 bool, hostname string) (string, error) {
 
 // convert clash file to vmess/trojan links, links are separated by newline(\n)
 func ParseClash(message string) (string, error) {
-	links, err := web.ParseLinks(message)
+	opt := web.ParseOption{Type: web.PARSE_CLASH}
+	links, err := web.ParseLinksWithOption(message, opt)
 	if err != nil {
 		return "", err
 	}
@@ -1681,7 +1682,8 @@ func ParseClash(message string) (string, error) {
 func PeekClash(message string, n int) (string, error) {
 	links, err := web.PeekClash(message, 2)
 	if err != nil {
-		links, err = web.ParseLinks(message)
+		opt := web.ParseOption{Type: web.PARSE_CLASH}
+		links, err = web.ParseLinksWithOption(message, opt)
 		if err != nil {
 			return "", err
 		}
