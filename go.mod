@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/eycorsican/go-tun2socks v1.16.11
 	github.com/kr/text v0.2.0 // indirect
+	github.com/sagernet/sing v0.2.4
 	// github.com/v2fly/v2ray-core/v4 v4.43.0
 	github.com/xtls/xray-core v1.8.1
 	github.com/xxf098/lite-proxy v0.0.0
@@ -38,7 +39,6 @@ require (
 	github.com/quic-go/quic-go v0.34.0 // indirect
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
-	github.com/sagernet/sing v0.2.4 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.1 // indirect
 	github.com/sagernet/wireguard-go v0.0.0-20221116151939-c99467f53f2c // indirect
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb // indirect
