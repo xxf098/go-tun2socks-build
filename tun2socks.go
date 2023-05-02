@@ -45,6 +45,7 @@ import (
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 	"github.com/xxf098/go-tun2socks-build/xray"
 
+	"github.com/sagernet/sing/common/control"
 	ldns "github.com/xxf098/lite-proxy/dns"
 	"github.com/xxf098/lite-proxy/download"
 	loutbound "github.com/xxf098/lite-proxy/outbound"
@@ -659,8 +660,13 @@ func StartV2Ray(
 				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
-		netCtlr := func(network, address string, fd uintptr) error {
-			return protectFd(vpnService, int(fd))
+		// netCtlr := func(network, address string, fd uintptr) error {
+		// 	return protectFd(vpnService, int(fd))
+		// }
+		netCtlr := func(network, address string, conn syscall.RawConn) error {
+			return control.Raw(conn, func(fd uintptr) error {
+				return protectFd(vpnService, int(fd))
+			})
 		}
 		vinternet.RegisterDialerController(netCtlr)
 		vinternet.RegisterListenerController(netCtlr)
@@ -734,8 +740,13 @@ func StartXRay(
 				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
-		netCtlr := func(network, address string, fd uintptr) error {
-			return protectFd(vpnService, int(fd))
+		// netCtlr := func(network, address string, fd uintptr) error {
+		// 	return protectFd(vpnService, int(fd))
+		// }
+		netCtlr := func(network, address string, conn syscall.RawConn) error {
+			return control.Raw(conn, func(fd uintptr) error {
+				return protectFd(vpnService, int(fd))
+			})
 		}
 		xinternet.RegisterDialerController(netCtlr)
 		xinternet.RegisterListenerController(netCtlr)
@@ -815,8 +826,13 @@ func StartV2RayWithVmess(
 				return fmt.Errorf("failed to protect fd %v", fd)
 			}
 		}
-		netCtlr := func(network, address string, fd uintptr) error {
-			return protectFd(vpnService, int(fd))
+		// netCtlr := func(network, address string, fd uintptr) error {
+		// 	return protectFd(vpnService, int(fd))
+		// }
+		netCtlr := func(network, address string, conn syscall.RawConn) error {
+			return control.Raw(conn, func(fd uintptr) error {
+				return protectFd(vpnService, int(fd))
+			})
 		}
 		vinternet.RegisterDialerController(netCtlr)
 		vinternet.RegisterListenerController(netCtlr)
@@ -892,8 +908,13 @@ func StartV2RayWithTunFd(
 			return fmt.Errorf("failed to protect fd %v", fd)
 		}
 	}
-	netCtlr := func(network, address string, fd uintptr) error {
-		return protectFd(vpnService, int(fd))
+	// netCtlr := func(network, address string, fd uintptr) error {
+	// 	return protectFd(vpnService, int(fd))
+	// }
+	netCtlr := func(network, address string, conn syscall.RawConn) error {
+		return control.Raw(conn, func(fd uintptr) error {
+			return protectFd(vpnService, int(fd))
+		})
 	}
 	vinternet.RegisterDialerController(netCtlr)
 	vinternet.RegisterListenerController(netCtlr)
@@ -981,8 +1002,13 @@ func StartXRayWithTunFd(
 			return fmt.Errorf("failed to protect fd %v", fd)
 		}
 	}
-	netCtlr := func(network, address string, fd uintptr) error {
-		return protectFd(vpnService, int(fd))
+	// netCtlr := func(network, address string, fd uintptr) error {
+	// 	return protectFd(vpnService, int(fd))
+	// }
+	netCtlr := func(network, address string, conn syscall.RawConn) error {
+		return control.Raw(conn, func(fd uintptr) error {
+			return protectFd(vpnService, int(fd))
+		})
 	}
 	xinternet.RegisterDialerController(netCtlr)
 	xinternet.RegisterListenerController(netCtlr)

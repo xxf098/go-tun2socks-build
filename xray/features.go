@@ -40,6 +40,7 @@ import (
 
 	// Transports
 	_ "github.com/xtls/xray-core/transport/internet/domainsocket"
+	_ "github.com/xtls/xray-core/transport/internet/grpc"
 	_ "github.com/xtls/xray-core/transport/internet/http"
 	_ "github.com/xtls/xray-core/transport/internet/kcp"
 	_ "github.com/xtls/xray-core/transport/internet/quic"
@@ -47,7 +48,6 @@ import (
 	_ "github.com/xtls/xray-core/transport/internet/tls"
 	_ "github.com/xtls/xray-core/transport/internet/udp"
 	_ "github.com/xtls/xray-core/transport/internet/websocket"
-	_ "github.com/xtls/xray-core/transport/internet/xtls"
 
 	// Transport headers
 	_ "github.com/xtls/xray-core/transport/internet/headers/http"
