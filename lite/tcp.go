@@ -27,7 +27,7 @@ func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
 		buf := bytespool.Alloc(pool.BufSize)
 		_, err := io.CopyBuffer(N.WriteOnlyWriter{Writer: lhs}, N.ReadOnlyReader{Reader: rhs}, buf)
 		if err != nil {
-			fmt.Printf("relay: %s\n", err)
+			fmt.Printf("relay: %v\n", err)
 		}
 		bytespool.Free(buf)
 		lhs.Close()
@@ -37,7 +37,7 @@ func (h *tcpHandler) relay(lhs net.Conn, rhs net.Conn) {
 	// io.CopyBuffer(lhs, rhs, buf)
 	_, err := io.CopyBuffer(N.WriteOnlyWriter{Writer: rhs}, N.ReadOnlyReader{Reader: lhs}, buf)
 	if err != nil {
-		fmt.Printf("relay: %s\n", err)
+		fmt.Printf("relay: %v\n", err)
 	}
 	bytespool.Free(buf)
 	lhs.Close()

@@ -604,6 +604,7 @@ func InputPacket(data []byte) {
 
 type QuerySpeed interface {
 	UpdateTraffic(up int64, down int64)
+	PersistTraffic(up int64, down int64) // update and save traffic
 }
 
 type TestLatency interface {
@@ -1145,18 +1146,33 @@ func createUpdateStatusPipeTask(querySpeed QuerySpeed) *runner.Task {
 	return runner.Go(func(shouldStop runner.S) error {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
+		tickerPersist := time.NewTicker(30 * time.Second)
+		defer tickerPersist.Stop()
 		zeroErr := errors.New("nil")
 		for {
 			if shouldStop() {
 				break
 			}
 			select {
-			case <-ticker.C:
+			case <-tickerPersist.C:
 				up := QueryOutboundStats("proxy", "uplink")
 				down := QueryOutboundStats("proxy", "downlink")
-				querySpeed.UpdateTraffic(up, down)
+				querySpeed.PersistTraffic(up, down)
+			default:
+				select {
+				case <-ticker.C:
+					up := QueryOutboundStats("proxy", "uplink")
+					down := QueryOutboundStats("proxy", "downlink")
+					if up > 0 || down > 0 {
+						querySpeed.UpdateTraffic(up, down)
+					}
 				// case <-lwipTUNDataPipeTask.StopChan():
 				// 	return errors.New("stopped")
+				case <-tickerPersist.C:
+					up := QueryOutboundStats("proxy", "uplink")
+					down := QueryOutboundStats("proxy", "downlink")
+					querySpeed.PersistTraffic(up, down)
+				}
 			}
 		}
 		return zeroErr
