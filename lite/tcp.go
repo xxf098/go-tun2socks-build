@@ -57,12 +57,11 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		return err
 	}
 	meta := &C.Metadata{
-		NetWork:  C.TCP,
-		Type:     0,
-		SrcPort:  "",
-		AddrType: int(addr.AddressType),
-		DstPort:  fmt.Sprintf("%d", addr.Port),
-		DstIP:    addr.IP,
+		NetWork: C.TCP,
+		Type:    0,
+		SrcPort: "",
+		DstPort: fmt.Sprintf("%d", addr.Port),
+		DstIP:   addr.IP,
 	}
 	c, err := h.client.DialContext(h.ctx, meta)
 	if err != nil {

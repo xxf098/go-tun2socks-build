@@ -90,12 +90,11 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	meta := &C.Metadata{
-		NetWork:  C.UDP,
-		Type:     0,
-		SrcPort:  "",
-		AddrType: int(addr.AddressType),
-		DstPort:  fmt.Sprintf("%d", addr.Port),
-		DstIP:    addr.IP,
+		NetWork: C.UDP,
+		Type:    0,
+		SrcPort: "",
+		DstPort: fmt.Sprintf("%d", addr.Port),
+		DstIP:   addr.IP,
 	}
 
 	pc, err := h.v.DialUDP(meta)
