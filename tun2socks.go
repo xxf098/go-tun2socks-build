@@ -1616,8 +1616,8 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 		"vmess":       func() interface{} { return new(conf.VMessOutboundConfig) },
 		"vless":       func() interface{} { return new(conf.VLessOutboundConfig) },
 		"socks":       func() interface{} { return new(conf.SocksClientConfig) },
-		"mtproto":     func() interface{} { return new(conf.MTProtoClientConfig) },
-		"dns":         func() interface{} { return new(conf.DNSOutboundConfig) },
+		// "mtproto":     func() interface{} { return new(conf.MTProtoClientConfig) },
+		"dns": func() interface{} { return new(conf.DNSOutboundConfig) },
 	}, "protocol", "settings")
 	if outboundConfig.Protocol != "vmess" && outboundConfig.Protocol != "vless" {
 		return vmess, err
@@ -1642,7 +1642,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 			for _, rawUser := range vnext.Users {
 				if err := json.Unmarshal(rawUser, account); err == nil {
 					vmess.ID = account.ID
-					vmess.Aid = int(account.AlterIds)
+					// vmess.Aid = int(account.AlterIds)
 					vmess.Security = account.Security
 				}
 			}
@@ -1661,7 +1661,7 @@ func ConvertJSONToVmess(configBytes []byte) (*Vmess, error) {
 			for _, rawUser := range vnext.Users {
 				if err := json.Unmarshal(rawUser, account); err == nil {
 					vmess.ID = account.ID
-					vmess.Aid = int(account.AlterIds)
+					// vmess.Aid = int(account.AlterIds)
 					vmess.Security = account.Security
 				}
 			}

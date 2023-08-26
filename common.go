@@ -627,7 +627,7 @@ func configVmessTransport(profile *Vmess, outboundsSettingsMsg1 json.RawMessage)
 				Method:  "GET",
 				Path:    []string{profile.Path}, // TODO: split by ","
 				Headers: v2ray.HTTPHeaders{
-					UserAgent:      []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36"},
+					UserAgent:      []string{"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"},
 					AcceptEncoding: []string{"gzip, deflate"},
 					Connection:     "keep-alive",
 					Pragma:         "no-cache",
@@ -789,7 +789,9 @@ func createFreedomOutboundDetourConfig(useIPv6 bool) conf.OutboundDetourConfig {
 // 4 GFWList
 // 5 ChinaList
 // >= 6 bypass LAN & China & AD block
-// 	0: "Plain", 1: "Regex", 2: "Domain", 3: "Full",
+//
+//	0: "Plain", 1: "Regex", 2: "Domain", 3: "Full",
+//
 // https://github.com/Loyalsoldier/v2ray-rules-dat
 func createRouterConfig(routeMode int) *conf.RouterConfig {
 	domainStrategy := "IPIfNonMatch"
