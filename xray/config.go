@@ -87,7 +87,9 @@ func createDNSConfig(routeMode int, dnsConf string) *conf.DNSConfig {
 // 4 GFWList
 // 5 ChinaList
 // >= 6 bypass LAN & China & AD block
-// 	0: "Plain", 1: "Regex", 2: "Domain", 3: "Full",
+//
+//	0: "Plain", 1: "Regex", 2: "Domain", 3: "Full",
+//
 // https://github.com/Loyalsoldier/v2ray-rules-dat
 func createRouterConfig(routeMode int) *conf.RouterConfig {
 	domainStrategy := "IPIfNonMatch"
@@ -130,10 +132,10 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		Type:        "field",
 		OutboundTag: "proxy",
 		IP: []string{
-			"1.1.1.1/32",
-			"1.0.0.1/32",
 			"8.8.8.8/32",
 			"8.8.4.4/32",
+			"1.1.1.1/32",
+			"1.0.0.1/32",
 			"149.154.160.0/22",
 			"149.154.164.0/22",
 			"91.108.4.0/22",

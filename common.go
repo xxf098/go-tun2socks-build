@@ -834,10 +834,10 @@ func createRouterConfig(routeMode int) *conf.RouterConfig {
 		Type:        "field",
 		OutboundTag: "proxy",
 		IP: []string{
-			"1.1.1.1/32",
-			"1.0.0.1/32",
 			"8.8.8.8/32",
 			"8.8.4.4/32",
+			"1.1.1.1/32",
+			"1.0.0.1/32",
 			"149.154.160.0/22",
 			"149.154.164.0/22",
 			"91.108.4.0/22",

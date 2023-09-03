@@ -32,7 +32,7 @@ func NewVmessOptions(opt []byte) VmessOptions {
 			Loglevel:       "error",
 			RouteMode:      0,
 			EnableSniffing: true,
-			DNS:            "1.1.1.1:53,223.5.5.5:53",
+			DNS:            "8.8.8.8:53,223.5.5.5:53",
 			AllowInsecure:  true,
 			Mux:            -1,
 		}

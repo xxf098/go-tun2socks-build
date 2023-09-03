@@ -188,7 +188,7 @@ func generateVmessConfig(profile *Vmess) ([]byte, error) {
 		Inbounds: nil,
 	}
 	vmessConfig.DNS = v2ray.DNS{
-		Servers: []string{"1.1.1.1"},
+		Servers: []string{"8.8.8.8"},
 		Hosts:   v2ray.Hosts{"domain:googleapis.cn": "googleapis.com"},
 	}
 	vmessConfig.Routing = v2ray.Routing{
