@@ -62,12 +62,15 @@ func CreateDNSConfig(option features.VmessOptions) *conf.DNSConfig {
 func toNameServerConfig(hostport string) *conf.NameServerConfig {
 	host, port, err := net.SplitHostPort(hostport)
 	if err != nil {
+		if strings.HasPrefix(hostport, "https://") {
+			return &conf.NameServerConfig{Address: &conf.Address{Address: xnet.ParseAddress(host)}}
+		}
 		return nil
 	}
 	p, err := strconv.Atoi(port)
 	if err != nil {
 		return nil
 	}
-	newConfig := &conf.NameServerConfig{Address: &conf.Address{xnet.ParseAddress(host)}, Port: uint16(p)}
+	newConfig := &conf.NameServerConfig{Address: &conf.Address{Address: xnet.ParseAddress(host)}, Port: uint16(p)}
 	return newConfig
 }

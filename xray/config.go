@@ -11,8 +11,8 @@ import (
 	"github.com/xxf098/go-tun2socks-build/v2ray"
 )
 
-var localhost = conf.NewHostAddress(&conf.Address{net.IPAddress([]byte{0, 0, 0, 0})}, nil)
-var googleapis = conf.NewHostAddress(&conf.Address{net.DomainAddress("googleapis.com")}, nil)
+var localhost = conf.NewHostAddress(&conf.Address{Address: net.IPAddress([]byte{0, 0, 0, 0})}, nil)
+var googleapis = conf.NewHostAddress(&conf.Address{Address: net.DomainAddress("googleapis.com")}, nil)
 
 var BlockHosts = map[string]*conf.HostAddress{
 	// "domain:umeng.com": localhost,
@@ -41,6 +41,7 @@ var BlockHosts = map[string]*conf.HostAddress{
 	"pos.baidu.com":        localhost,
 	"hm.baidu.com":         localhost,
 	"cpro.baidu.com":       localhost,
+	"dns.google":           conf.NewHostAddress(&conf.Address{Address: net.IPAddress([]byte{8, 8, 8, 8})}, nil),
 	"domain:googleapis.cn": googleapis,
 }
 
